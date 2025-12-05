@@ -13,6 +13,7 @@ import com.robo.RideWithUs.DTO.RegisterDriverVehicleDTO;
 import com.robo.RideWithUs.DTO.ResponseStructure;
 import com.robo.RideWithUs.Entity.Driver;
 import com.robo.RideWithUs.Entity.Vehicle;
+import com.robo.RideWithUs.Exceptions.DriverNotFoundException;
 import com.robo.RideWithUs.Repository.DriverRepository;
 
 @Service
@@ -103,6 +104,36 @@ public class DriverService {
 			
 
 		return "Unkown";
+	}
+
+	public ResponseEntity<ResponseStructure<Driver>> findbyDriverID(int id) {
+		
+		Driver driver = driverRepository.findById(id).orElseThrow(()->new DriverNotFoundException());
+		
+		ResponseStructure<Driver> responseStructure = new ResponseStructure<Driver>();
+		responseStructure.setStatusCode(HttpStatus.FOUND.value());
+		responseStructure.setMessage("Driver found successfully");
+		responseStructure.setData(driver);
+		
+		return new ResponseEntity<ResponseStructure<Driver>>(responseStructure,HttpStatus.FOUND);
+		
+		
+		
+	}
+
+	public ResponseEntity<ResponseStructure<Driver>> deleteDriverbyID(int id) {
+		
+		Driver driver = driverRepository.findById(id).orElseThrow(()->new DriverNotFoundException());
+		
+		driverRepository.delete(driver);
+		
+		ResponseStructure<Driver> responseStructure = new ResponseStructure<Driver>();
+		responseStructure.setStatusCode(HttpStatus.FOUND.value());
+		responseStructure.setMessage("Driver deleted successfully");
+		responseStructure.setData(driver);
+		
+		return new ResponseEntity<ResponseStructure<Driver>>(responseStructure,HttpStatus.FOUND);
+		
 	}
 
 }
