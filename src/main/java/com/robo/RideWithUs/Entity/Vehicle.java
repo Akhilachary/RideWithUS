@@ -2,6 +2,7 @@ package com.robo.RideWithUs.Entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 
 @Entity
@@ -15,10 +16,11 @@ public class Vehicle {
 	private String modal;
 	private int capacity;
 	private String city;
-	private String availabilityStatus;
+	private String availabilityStatus = "available";
 	private double pricePerKM;
 	
 	@OneToOne
+	@MapsId
 	private Driver driver;
 
 	public int getId() {

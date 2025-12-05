@@ -23,7 +23,7 @@ public class Driver {
 	private String mailID;
 	
 	
-	@OneToOne(cascade = CascadeType.PERSIST)
+	 @OneToOne(mappedBy = "driver", cascade = CascadeType.ALL)
 	private Vehicle vehicle;
 	
 	
