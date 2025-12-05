@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.robo.RideWithUs.DTO.LocationDto;
 import com.robo.RideWithUs.DTO.RegisterDriverVehicleDTO;
 import com.robo.RideWithUs.DTO.ResponseStructure;
 import com.robo.RideWithUs.Entity.Driver;
@@ -133,6 +134,24 @@ public class DriverService {
 		responseStructure.setData(driver);
 		
 		return new ResponseEntity<ResponseStructure<Driver>>(responseStructure,HttpStatus.FOUND);
+		
+	}
+	
+	public ResponseEntity<ResponseStructure<Driver>> updateDriver(LocationDto dto,int driverId) {
+		Driver driver = driverRepository.findById(driverId).orElseThrow(()-> new DriverNotFoundException());
+		String city = getLocation(dto.getLattitude(), dto.getLongitude());
+		Vehicle vehicle = driver.getVehicle();
+		vehicle.setCity(city);
+		driver.setVehicle(vehicle);
+		driverRepository.save(driver);
+		
+
+		ResponseStructure<Driver> responseStructure = new ResponseStructure<Driver>();
+		responseStructure.setStatusCode(HttpStatus.ACCEPTED.value());
+		responseStructure.setMessage("Driver UPDATED successfully");
+		responseStructure.setData(driver);
+		
+		return new ResponseEntity<ResponseStructure<Driver>>(responseStructure,HttpStatus.OK);
 		
 	}
 

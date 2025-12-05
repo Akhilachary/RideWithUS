@@ -1,7 +1,10 @@
 package com.robo.RideWithUs.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 
@@ -20,7 +23,9 @@ public class Vehicle {
 	private double pricePerKM;
 	
 	@OneToOne
-	@MapsId
+	@MapsId  //to get same id of driver id
+	@JoinColumn(name = "id")
+	@JsonIgnore //to avoid nested objects inside driver especially in response (JSON) postman
 	private Driver driver;
 
 	public int getId() {
