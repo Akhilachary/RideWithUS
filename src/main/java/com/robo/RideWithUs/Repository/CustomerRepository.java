@@ -1,12 +1,15 @@
 package com.robo.RideWithUs.Repository;
 
 import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import com.robo.RideWithUs.Entity.Driver;
+
+import com.robo.RideWithUs.Entity.Customer;
+
 
 @Repository
-public interface DriverRepository extends JpaRepository<Driver, Integer> {
+public interface CustomerRepository extends JpaRepository<Customer, Long>{
 
-    Optional<Driver> findByMobileNumber(long mobileNumber);
+	 Optional<Customer> findByMobileNumber(long mobileNumber);
 }

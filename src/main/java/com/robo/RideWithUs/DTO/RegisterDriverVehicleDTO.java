@@ -16,8 +16,17 @@ public class RegisterDriverVehicleDTO {
 	private double longitude;
 	private double latitude;
 	private long priceperKilometer;
+	private int averageSpeed;
 	
 	
+	public int getAverageSpeed() {
+		return averageSpeed;
+	}
+
+	public void setAverageSpeed(int averageSpeed) {
+		this.averageSpeed = averageSpeed;
+	}
+
 	public String getVehicletype() {
 		return vehicletype;
 	}
@@ -138,10 +147,12 @@ public class RegisterDriverVehicleDTO {
 		this.priceperKilometer = priceperKilometer;
 	}
 
+	
+
 	public RegisterDriverVehicleDTO(String licenseNumber, String upiID, String driverName, int driverAge,
 			long driverMobileNumber, String gender, String mailID, String vehicleName, String vehicleNumber,
 			String vehicleModel, String vehicletype, int capacity, double longitude, double latitude,
-			long priceperKilometer) {
+			long priceperKilometer, int averageSpeed) {
 		super();
 		this.licenseNumber = licenseNumber;
 		this.upiID = upiID;
@@ -158,6 +169,7 @@ public class RegisterDriverVehicleDTO {
 		this.longitude = longitude;
 		this.latitude = latitude;
 		this.priceperKilometer = priceperKilometer;
+		this.averageSpeed = averageSpeed;
 	}
 
 	public RegisterDriverVehicleDTO() {
