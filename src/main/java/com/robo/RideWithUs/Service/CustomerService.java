@@ -102,7 +102,7 @@ public class CustomerService {
 	        
 	        if (v.getAverageSpeed() <= 0) {
 	            detail.setEstimatedTime(-1);
-//	            detail.setEstimatedTimeString("N/A");
+	            detail.setEstimatedTimeString("N/A");
 	            detail.setFare((int) (v.getPricePerKM() * distanceKm));
 	            detail.setVehicle(v);
 	            availableVehicleDTO.getAvailableVehicleDetails().add(detail);
@@ -169,11 +169,11 @@ public class CustomerService {
 
 		// Response
 		ResponseStructure<Customer> response = new ResponseStructure<>();
-		response.setStatusCode(HttpStatus.FOUND.value());
-		response.setMessage("Customer fetched successfully");
+		response.setStatusCode(HttpStatus.GONE.value());
+		response.setMessage("Customer deleted successfully");
 		response.setData(customer);
 
-		return new ResponseEntity<ResponseStructure<Customer>>(response, HttpStatus.FOUND);
+		return new ResponseEntity<ResponseStructure<Customer>>(response, HttpStatus.GONE);
 
 	}
 

@@ -107,4 +107,28 @@ public class GlobalExceptions {
 	    return new ResponseEntity<ResponseStructure<String>>(response, HttpStatus.BAD_REQUEST);
 		
 	}
+	
+	@ExceptionHandler(com.robo.RideWithUs.Exceptions.LocationNotFoundForCityNameException.class)
+	public ResponseEntity<ResponseStructure<String>> LocationNotFoundForCityNameException(com.robo.RideWithUs.Exceptions.LocationNotFoundForCityNameException ex) {
+		
+		ResponseStructure<String> response = new ResponseStructure<>();
+	    response.setStatusCode(HttpStatus.SERVICE_UNAVAILABLE.value());
+	    response.setMessage("Location Not Found For CityName ");
+	    response.setData("Location Not Found For CityName");
+
+	    return new ResponseEntity<ResponseStructure<String>>(response, HttpStatus.SERVICE_UNAVAILABLE);
+		
+	}
+	
+	@ExceptionHandler(com.robo.RideWithUs.Exceptions.LocationIQErrorForCityNameException.class)
+	public ResponseEntity<ResponseStructure<String>> LocationIQErrorForCityNameException(com.robo.RideWithUs.Exceptions.LocationIQErrorForCityNameException ex) {
+		
+		ResponseStructure<String> response = new ResponseStructure<>();
+	    response.setStatusCode(HttpStatus.SERVICE_UNAVAILABLE.value());
+	    response.setMessage("LocationIQ Error Not Found For CityName ");
+	    response.setData("LocationIQ Error Not Found For CityName");
+
+	    return new ResponseEntity<ResponseStructure<String>>(response, HttpStatus.SERVICE_UNAVAILABLE);
+		
+	}
 }

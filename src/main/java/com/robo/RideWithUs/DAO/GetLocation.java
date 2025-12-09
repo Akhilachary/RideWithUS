@@ -8,6 +8,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import com.robo.RideWithUs.DTO.DestinationLocationResponse;
 import com.robo.RideWithUs.Exceptions.APIwillNotGivingTheLocationException;
+import com.robo.RideWithUs.Exceptions.LocationIQErrorForCityNameException;
+import com.robo.RideWithUs.Exceptions.LocationNotFoundForCityNameException;
 
 @Service
 public class GetLocation {
@@ -25,7 +27,7 @@ public class GetLocation {
 
 		try {
 			Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-			System.out.println(response);
+			System.err.println(response);
 
 			if (response == null || response.get("address") == null) {
 				throw new APIwillNotGivingTheLocationException();
@@ -48,13 +50,11 @@ public class GetLocation {
 
 		return "Unkown";
 	}
-	
+
 	private static final String API_KEY1 = "pk.9f97384d7176ae66c2b751ed432be655";
 	private static final String BASE_URL1 = "https://us1.locationiq.com/v1/search";
 
 	public DestinationLocationResponse getCoordinates1(String cityName) {
-
-		
 
 		RestTemplate restTemplate = new RestTemplate();
 
@@ -63,29 +63,28 @@ public class GetLocation {
 		try {
 			// Debug raw response
 			ResponseEntity<String> rawResponse = restTemplate.getForEntity(url, String.class);
-			System.out.println("RAW LOCATIONIQ RESPONSE = " + rawResponse.getBody());
+			System.err.println("RAW LOCATIONIQ RESPONSE = " + rawResponse.getBody());
 
 			// Convert JSON → Java object
-			DestinationLocationResponse[] response = restTemplate.getForObject(url, DestinationLocationResponse[].class);
+			DestinationLocationResponse[] response = restTemplate.getForObject(url,
+					DestinationLocationResponse[].class);
 
 			if (response != null && response.length > 0) {
 				return response[0];
 			} else {
-				throw new RuntimeException("Location not found for: " + cityName);
+				throw new LocationNotFoundForCityNameException();
 			}
 
 		} catch (Exception e) {
-			throw new RuntimeException("LocationIQ Error for: " + cityName + " -> " + e.getMessage());
+			throw new LocationIQErrorForCityNameException();
 		}
 	}
-	
+
 	private static final String API_KEY2 = "pk.1d09567f3559e6ccaeff4bf00639b9fd";
 	private static final String BASE_URL2 = "https://us1.locationiq.com/v1/search";
 
-
 	public DestinationLocationResponse getCoordinates2(String cityName) {
 
-		
 		RestTemplate restTemplate = new RestTemplate();
 
 		String url = BASE_URL2 + "?key=" + API_KEY2 + "&q=" + cityName + "&format=json" + "&limit=1";
@@ -93,19 +92,20 @@ public class GetLocation {
 		try {
 			// Debug raw response
 			ResponseEntity<String> rawResponse = restTemplate.getForEntity(url, String.class);
-			System.out.println("RAW LOCATIONIQ RESPONSE = " + rawResponse.getBody());
+			System.err.println("RAW LOCATIONIQ RESPONSE = " + rawResponse.getBody());
 
 			// Convert JSON → Java object
-			DestinationLocationResponse[] response = restTemplate.getForObject(url, DestinationLocationResponse[].class);
+			DestinationLocationResponse[] response = restTemplate.getForObject(url,
+					DestinationLocationResponse[].class);
 
 			if (response != null && response.length > 0) {
 				return response[0];
 			} else {
-				throw new RuntimeException("Location not found for: " + cityName);
+				throw new LocationNotFoundForCityNameException();
 			}
 
 		} catch (Exception e) {
-			throw new RuntimeException("LocationIQ Error for: " + cityName + " -> " + e.getMessage());
+			throw new LocationIQErrorForCityNameException();
 		}
 	}
 
