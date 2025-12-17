@@ -11,23 +11,38 @@ import com.robo.RideWithUs.Entity.Bookings;
 @Repository
 public interface BookingRepository extends JpaRepository<Bookings, Integer>{
 
-	// For completed rides (multiple)
-    List<Bookings> findByCustomerMobileNumberAndBookingStatus(long mobileNo, String bookingStatus);
+	 // Customer booking history (completed rides)
+    List<Bookings> findByCustomerMobileNumberAndBookingStatus(
+            long mobileNo,
+            String bookingStatus
+    );
 
-    // For active ride (only one)
-    Bookings findFirstByCustomerMobileNumberAndBookingStatus(long mobileNo, String bookingStatus);
+    // Customer active booking (only one)
+    Bookings findFirstByCustomerMobileNumberAndBookingStatus(
+            long mobileNo,
+            String bookingStatus
+    );
 
     // Driver booking history
-    List<Bookings> findByVehicle_Driver_MobileNumberAndBookingStatus(long mobileNo, String bookingStatus);
+    List<Bookings> findByVehicle_Driver_MobileNumberAndBookingStatus(
+            long mobileNo,
+            String bookingStatus
+    );
 
-	List<Bookings> findByDriverIdAndBookingDateAndBookingStatus(int driverID, LocalDateTime now, String string);
-	
-	int countByDriverIdAndBookingStatusAndBookingDateBetween(
-	        int driverId,
-	        String bookingStatus,
-	        LocalDateTime start,
-	        LocalDateTime end
-	);
+    // ❗ FIXED: Driver + date + status
+    List<Bookings> findByVehicle_Driver_IdAndBookingDateAndBookingStatus(
+            int driverId,
+            LocalDateTime bookingDate,
+            String bookingStatus
+    );
+
+    // ❗ FIXED: Driver booking count between dates
+    int countByVehicle_Driver_IdAndBookingStatusAndBookingDateBetween(
+            int driverId,
+            String bookingStatus,
+            LocalDateTime start,
+            LocalDateTime end
+    );
 
     
 }

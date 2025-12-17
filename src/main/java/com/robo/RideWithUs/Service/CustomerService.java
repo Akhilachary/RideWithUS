@@ -69,90 +69,81 @@ public class CustomerService {
 
 	}
 
-	public ResponseEntity<ResponseStructure<AvailableVehicleDTO>> sellAllAvailableVehicles(
+	public ResponseEntity<ResponseStructure<AvailableVehicleDTO>> seeAllAvailableVehicles(
 	        long mobileNumber, String city) {
 
 	    Customer customer = customerrepository.findByMobileNumber(mobileNumber)
-	            .orElseThrow(()->new CustomerNotFoundWithThisMobileNumberException());
+	            .orElseThrow(CustomerNotFoundWithThisMobileNumberException::new);
 
 	    String customerLocation = customer.getCustomerCurrentLocation();
 
-	    DestinationLocationResponse destinationLocation = getLocation.getCoordinates1(city);
-	    DestinationLocationResponse customerLocationCoords = getLocation.getCoordinates2(customerLocation);
+	    DestinationLocationResponse destinationCoords =
+	            getLocation.getCoordinates1(city);
 
-	    // Calculate distance + time
+	    DestinationLocationResponse customerCoords =
+	            getLocation.getCoordinates2(customerLocation);
+
 	    Distance_Duration_Response distanceResponse =
 	            distance_Duration_Service.getDistanceAndDuration(
-	                    customerLocationCoords.getLatitude(),
-	                    customerLocationCoords.getLongitude(),
-	                    destinationLocation.getLatitude(),
-	                    destinationLocation.getLongitude()
+	                    customerCoords.getLatitude(),
+	                    customerCoords.getLongitude(),
+	                    destinationCoords.getLatitude(),
+	                    destinationCoords.getLongitude()
 	            );
 
 	    double distanceKm = distanceResponse.getDistanceInKm();
 
-	    // Prepare DTO
-	    AvailableVehicleDTO availableVehicleDTO = new AvailableVehicleDTO();
-	    availableVehicleDTO.setCustomer(customer);
-	    availableVehicleDTO.setSourceLocation(customerLocation);
-	    availableVehicleDTO.setDestinationLocation(city);
-	    availableVehicleDTO.setDistance((int) distanceKm);
+	    AvailableVehicleDTO dto = new AvailableVehicleDTO();
+	    dto.setCustomer(customer);
+	    dto.setSourceLocation(customerLocation);
+	    dto.setDestinationLocation(city);
+	    dto.setDistance(distanceKm);
 
-	    // Fetch available vehicles
-	    List<Vehicle> availableVehicles =
-	            vehicleRepository.findByCityAndAvailabilityStatus(city, "available");
+	    List<Vehicle> vehicles =
+	            vehicleRepository.findByCityAndAvailabilityStatus(city, "AVAILABLE");
 
-	    // Build vehicle details list
-	    for (Vehicle v : availableVehicles) {
+	    for (Vehicle v : vehicles) {
+
+	        // 🔴 Driver validation
+	        if (v.getDriver() == null) continue;
+
+	        if (!v.getDriver().getStatus().equalsIgnoreCase("ACTIVE")) {
+	            continue; // Skip INACTIVE / BLOCKED drivers
+	        }
 
 	        VehicleDetail detail = new VehicleDetail();
 
-	        // fare calculation
+	        // 💰 Fare calculation
 	        double fare = v.getPricePerKM() * distanceKm;
-	        detail.setFare((int) fare);
-	        
+	        detail.setFare((int) Math.round(fare));
+
+	        // ⏱ Estimated time
 	        if (v.getAverageSpeed() <= 0) {
-	            detail.setEstimatedTime(-1);
-//	            detail.setEstimatedTimeString("N/A");
-	            detail.setFare((int) (v.getPricePerKM() * distanceKm));
-	            detail.setVehicle(v);
-	            availableVehicleDTO.getAvailableVehicleDetails().add(detail);
-	            continue;
-	        }
-
-
-	     // estimated time
-	        if (v.getAverageSpeed() <= 0) {
-
 	            detail.setEstimatedTime(-1);
 	            detail.setEstimatedTimeString("N/A");
-
 	        } else {
+	            int totalMinutes =
+	                    (int) Math.round((distanceKm / v.getAverageSpeed()) * 60);
 
-	            double hours = distanceKm / v.getAverageSpeed(); // time in hours (decimal)
-	            int totalMinutes = (int) Math.round(hours * 60); // convert to minutes
-
-	            detail.setEstimatedTime(totalMinutes); // raw minutes (if you need it)
+	            detail.setEstimatedTime(totalMinutes);
 
 	            int hr = totalMinutes / 60;
 	            int min = totalMinutes % 60;
-
 	            detail.setEstimatedTimeString(hr + " hours " + min + " minutes");
 	        }
 
-
 	        detail.setVehicle(v);
-
-	        availableVehicleDTO.getAvailableVehicleDetails().add(detail);
+	        dto.getAvailableVehicleDetails().add(detail);
 	    }
 
-	    // Response
-	    ResponseStructure<AvailableVehicleDTO> response = new ResponseStructure<>();
-	    response.setStatusCode(HttpStatus.FOUND.value());
-	    response.setMessage("All available vehicles fetched successfully");
-	    response.setData(availableVehicleDTO);
+	    ResponseStructure<AvailableVehicleDTO> response =
+	            new ResponseStructure<>();
 
-	    return new ResponseEntity<>(response, HttpStatus.FOUND);
+	    response.setStatusCode(HttpStatus.OK.value());
+	    response.setMessage("Available vehicles fetched successfully");
+	    response.setData(dto);
+
+	    return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
 

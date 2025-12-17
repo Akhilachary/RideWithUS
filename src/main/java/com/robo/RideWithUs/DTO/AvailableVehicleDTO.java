@@ -8,7 +8,7 @@ import com.robo.RideWithUs.Entity.Customer;
 public class AvailableVehicleDTO {
 
     private Customer customer;
-    private int distance;
+    private double distance;
     private String sourceLocation;
     private String destinationLocation;
 
@@ -22,10 +22,10 @@ public class AvailableVehicleDTO {
         this.customer = customer;
     }
 
-    public int getDistance() {
+    public double getDistance() {
         return distance;
     }
-    public void setDistance(int distance) {
+    public void setDistance(double distance) {
         this.distance = distance;
     }
 
@@ -50,7 +50,7 @@ public class AvailableVehicleDTO {
         this.availableVehicleDetails = availableVehicleDetails;
     }
 
-    public AvailableVehicleDTO(Customer customer, int distance, String sourceLocation, String destinationLocation,
+    public AvailableVehicleDTO(Customer customer, double distance, String sourceLocation, String destinationLocation,
                                List<VehicleDetail> availableVehicleDetails) {
         this.customer = customer;
         this.distance = distance;

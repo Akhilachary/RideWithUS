@@ -298,7 +298,7 @@ public class DriverService {
 	    // ✅ Count today's driver cancellations
 	    LocalDate today = LocalDate.now();
 	    int cancelledCount = bookingRepository
-	            .countByDriverIdAndBookingStatusAndBookingDateBetween(
+	            .countByVehicle_Driver_IdAndBookingStatusAndBookingDateBetween(
 	                    driverID,
 	                    "CANCELLED BY DRIVER",
 	                    today.atStartOfDay(),

@@ -1,8 +1,5 @@
 package com.robo.RideWithUs.Controller;
 
-
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -47,7 +44,7 @@ public class CustomerController {
 	@GetMapping("/seeallAvailablevehicle/{mobileNumber}/{city}")
 	public ResponseEntity<ResponseStructure<AvailableVehicleDTO>> sellAllAvailableVehicles(@PathVariable long mobileNumber, @PathVariable String city) {
 		
-		return customerservice.sellAllAvailableVehicles(mobileNumber, city);
+		return customerservice.seeAllAvailableVehicles(mobileNumber, city);
 	}
 	
 	@DeleteMapping("deleteCustomer/{mobileNumber}")
