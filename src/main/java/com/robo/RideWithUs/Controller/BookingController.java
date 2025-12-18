@@ -26,3 +26,4 @@ public class BookingController {
 		return bookingService.bookVehicle(mobileNo,bookVehicledto);
 	}
 }
+

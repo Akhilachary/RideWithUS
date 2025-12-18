@@ -3,6 +3,7 @@ package com.robo.RideWithUs.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.robo.RideWithUs.DAO.GetLocation;
 import com.robo.RideWithUs.DTO.BookingHistoryDTO;
+import com.robo.RideWithUs.DTO.DriverDeletedDTO;
 import com.robo.RideWithUs.DTO.QRCodeDTO;
 import com.robo.RideWithUs.DTO.RegisterDriverVehicleDTO;
 import com.robo.RideWithUs.DTO.ResponseStructure;
@@ -24,6 +26,8 @@ import com.robo.RideWithUs.Entity.Driver;
 import com.robo.RideWithUs.Entity.Payment;
 import com.robo.RideWithUs.Entity.Vehicle;
 import com.robo.RideWithUs.Exceptions.BookingNotFoundException;
+import com.robo.RideWithUs.Exceptions.DriverAlreadyExistException;
+import com.robo.RideWithUs.Exceptions.DriverBlockedException;
 import com.robo.RideWithUs.Exceptions.DriverNotFoundException;
 import com.robo.RideWithUs.Exceptions.DriverNotFoundExceptionForthisNumber;
 import com.robo.RideWithUs.Exceptions.DriverNotFoundWithMobileNumberException;
@@ -58,6 +62,11 @@ public class DriverService {
 	PaymentRepository paymentRepository;
 
 	public ResponseEntity<ResponseStructure<Driver>> registerDriver(RegisterDriverVehicleDTO driverVehicleDTO) {
+		
+		Optional<Driver> d = driverRepository.findByMobileNumber(driverVehicleDTO.getDriverMobileNumber());
+		if(d.isPresent()) {
+			throw new DriverAlreadyExistException();
+		}
 
 		Driver driver = new Driver();
 
@@ -145,18 +154,23 @@ public class DriverService {
 	    return new ResponseEntity<ResponseStructure<Driver>>(response, HttpStatus.FOUND);
 	}
 
-	public ResponseEntity<ResponseStructure<Driver>> deleteDriverbyID(long mobileNo) {
+	public ResponseEntity<ResponseStructure<DriverDeletedDTO>> deleteDriverbyID(long mobileNo) {
 		
 		Driver driver = driverRepository.findByMobileNumber(mobileNo).orElseThrow(()->new DriverNotFoundExceptionForthisNumber());
 		
 		driverRepository.delete(driver);
+		
+		DriverDeletedDTO deletedDTO = new DriverDeletedDTO();
+		deletedDTO.setDriverName(driver.getDriverName());
+		deletedDTO.setMobileNumber(mobileNo);
+		deletedDTO.setStatus("Deleted");
 		// Response
-	    ResponseStructure<Driver> response = new ResponseStructure<>();
+	    ResponseStructure<DriverDeletedDTO> response = new ResponseStructure<>();
 	    response.setStatusCode(HttpStatus.MOVED_PERMANENTLY.value());
 	    response.setMessage("Driver deleted successfully");
-	    response.setData(driver);
+	    response.setData(deletedDTO);
 
-	    return new ResponseEntity<ResponseStructure<Driver>>(response, HttpStatus.MOVED_PERMANENTLY);
+	    return new ResponseEntity<ResponseStructure<DriverDeletedDTO>>(response, HttpStatus.MOVED_PERMANENTLY);
 	}
 
 
@@ -329,6 +343,38 @@ public class DriverService {
 	    response.setData(booking);
 
 	    return new ResponseEntity<>(response, HttpStatus.ACCEPTED);
+	}
+
+
+
+	public ResponseEntity<ResponseStructure<Driver>> changeActiveStatus(int driverId) {
+		
+		Driver driver = driverRepository.findById(driverId).orElseThrow(()-> new DriverNotFoundException());
+		String status = driver.getStatus();
+		
+		if (status == null) {
+	        throw new IllegalStateException("Driver status is not set");
+	    }
+
+	    if (status.equalsIgnoreCase("BLOCKED")) {
+	        throw new DriverBlockedException();
+	    }
+
+	    if (status.equalsIgnoreCase("AVAILABLE")) {
+	        driver.setStatus("UNAVAILABLE");
+	    } else {
+	        driver.setStatus("AVAILABLE");
+	    }
+
+	    driverRepository.save(driver); 
+
+	    ResponseStructure<Driver> response = new ResponseStructure<>();
+	    response.setStatusCode(HttpStatus.ACCEPTED.value());
+	    response.setMessage("Driver status changed to " + driver.getStatus());
+	    response.setData(driver);
+
+	    return new ResponseEntity<>(response, HttpStatus.ACCEPTED);
+		
 	}
 	
 	

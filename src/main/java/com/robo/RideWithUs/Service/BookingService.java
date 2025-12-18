@@ -45,7 +45,7 @@ public class BookingService {
 		
 		Driver driver = vehicle.getDriver();
 		
-		if(! driver.getStatus().equalsIgnoreCase("AVAILABLE")) {
+		if(! driver.getStatus().equalsIgnoreCase("ACTIVE")) {
 			throw new DriverNotAvailableException();
 		}
 		
@@ -71,7 +71,6 @@ public class BookingService {
 		vehicle.setAvailabilityStatus("BOOKED");
 		
 		
-		
 		bookingRepository.save(bookings);
 		customerRepository.save(customer);
 		vehicleRepository.save(vehicle);
@@ -87,3 +86,4 @@ public class BookingService {
 	}
 
 }
+

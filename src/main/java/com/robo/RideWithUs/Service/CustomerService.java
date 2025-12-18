@@ -1,6 +1,7 @@
 package com.robo.RideWithUs.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,8 +23,10 @@ import com.robo.RideWithUs.Entity.Customer;
 
 import com.robo.RideWithUs.Entity.Vehicle;
 import com.robo.RideWithUs.Exceptions.BookingNotFoundException;
+import com.robo.RideWithUs.Exceptions.CustomerExistAlreadyException;
 import com.robo.RideWithUs.Exceptions.CustomerNotFoundException;
 import com.robo.RideWithUs.Exceptions.CustomerNotFoundWithThisMobileNumberException;
+import com.robo.RideWithUs.Exceptions.LocationNotFoundException;
 import com.robo.RideWithUs.Exceptions.NoActiveBookingFoundException;
 import com.robo.RideWithUs.Repository.BookingRepository;
 import com.robo.RideWithUs.Repository.CustomerRepository;
@@ -47,6 +50,12 @@ public class CustomerService {
 	Distance_Duration_Service distance_Duration_Service;
 
 	public ResponseEntity<ResponseStructure<Customer>> registerCustomer(CustomerRegisterDTO customerRegisterDTO) {
+		
+		Optional<Customer> c = customerrepository.findByMobileNumber(customerRegisterDTO.getMobileNo());
+		
+		if(c.isPresent()) {
+			throw new CustomerExistAlreadyException();
+		}
 
 		Customer customer = new Customer();
 		customer.setCustomerName(customerRegisterDTO.getName());
@@ -74,6 +83,13 @@ public class CustomerService {
 
 	    Customer customer = customerrepository.findByMobileNumber(mobileNumber)
 	            .orElseThrow(CustomerNotFoundWithThisMobileNumberException::new);
+	    
+	    if (customer.isActiveBookingFlag()) {
+	        throw new IllegalStateException(
+	            "You already have an active booking. Please complete or cancel it first."
+	        );
+	    }
+
 
 	    String customerLocation = customer.getCustomerCurrentLocation();
 
@@ -82,6 +98,10 @@ public class CustomerService {
 
 	    DestinationLocationResponse customerCoords =
 	            getLocation.getCoordinates2(customerLocation);
+
+	    if (destinationCoords == null || customerCoords == null) {
+	        throw new LocationNotFoundException();
+	    }
 
 	    Distance_Duration_Response distanceResponse =
 	            distance_Duration_Service.getDistanceAndDuration(
@@ -99,17 +119,18 @@ public class CustomerService {
 	    dto.setDestinationLocation(city);
 	    dto.setDistance(distanceKm);
 
+	    // ✅ Fetch vehicles near CUSTOMER current location
 	    List<Vehicle> vehicles =
-	            vehicleRepository.findByCityAndAvailabilityStatus(city, "AVAILABLE");
+	            vehicleRepository.findByCityAndAvailabilityStatus(
+	                    customerLocation, "AVAILABLE");
 
 	    for (Vehicle v : vehicles) {
 
-	        // 🔴 Driver validation
+	        // Driver must exist
 	        if (v.getDriver() == null) continue;
 
-	        if (!v.getDriver().getStatus().equalsIgnoreCase("ACTIVE")) {
-	            continue; // Skip INACTIVE / BLOCKED drivers
-	        }
+	        // Driver must be AVAILABLE (not BLOCKED / UNAVAILABLE)
+	        if (!v.getDriver().getStatus().equalsIgnoreCase("ACTIVE")) continue;
 
 	        VehicleDetail detail = new VehicleDetail();
 
@@ -136,15 +157,14 @@ public class CustomerService {
 	        dto.getAvailableVehicleDetails().add(detail);
 	    }
 
-	    ResponseStructure<AvailableVehicleDTO> response =
-	            new ResponseStructure<>();
-
+	    ResponseStructure<AvailableVehicleDTO> response = new ResponseStructure<>();
 	    response.setStatusCode(HttpStatus.OK.value());
 	    response.setMessage("Available vehicles fetched successfully");
 	    response.setData(dto);
 
 	    return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+
 
 
 	public ResponseEntity<ResponseStructure<Customer>> findCustomerByMobileNumber(long mobileNumber) {
