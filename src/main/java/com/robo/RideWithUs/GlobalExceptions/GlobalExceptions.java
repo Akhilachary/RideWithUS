@@ -13,6 +13,7 @@ import com.robo.RideWithUs.Exceptions.DriverAlreadyExistException;
 import com.robo.RideWithUs.Exceptions.DriverBlockedException;
 import com.robo.RideWithUs.Exceptions.DriverNotAvailableException;
 import com.robo.RideWithUs.Exceptions.IncorrectLocationException;
+import com.robo.RideWithUs.Exceptions.InvalidOTPException;
 import com.robo.RideWithUs.Exceptions.LocationNotFoundException;
 import com.robo.RideWithUs.Exceptions.NoActiveBookingFoundException;
 
@@ -231,6 +232,16 @@ public class GlobalExceptions {
 
 	        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 	    }
+	 
+	 @ExceptionHandler(InvalidOTPException.class)
+	 public ResponseEntity<ResponseStructure<String>> invalidOTPException() {
+		 ResponseStructure<String> response = new ResponseStructure<>();
+		    response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+		    response.setMessage("Invalid OTP. Please enter the correct OTP.");
+		    response.setData(null);
+
+		    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+	 }
 }
 
 

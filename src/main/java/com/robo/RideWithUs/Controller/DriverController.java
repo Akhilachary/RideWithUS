@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.robo.RideWithUs.DTO.BookingHistoryDTO;
 import com.robo.RideWithUs.DTO.DriverDeletedDTO;
+import com.robo.RideWithUs.DTO.QRCodeDTO;
 import com.robo.RideWithUs.DTO.RegisterDriverVehicleDTO;
 import com.robo.RideWithUs.DTO.ResponseStructure;
+import com.robo.RideWithUs.DTO.SuccessfullRideDTO;
 import com.robo.RideWithUs.DTO.UpdateDriverVehicleLocationDTO;
 import com.robo.RideWithUs.Entity.Bookings;
 import com.robo.RideWithUs.Entity.Driver;
@@ -60,10 +62,21 @@ public class DriverController {
 		return driverService.seeDriverBookingHistory(mobileNo);
 	}
 	
-	@PutMapping("completeRide/{bookingId}/{payType}")
-	public void completeRide(@RequestParam int bookingId, @RequestParam String payType) {
-		driverService.completeRide(bookingId,payType);
+	@PutMapping("completeRideByCash/{bookingId}/{payType}")
+	public ResponseEntity<ResponseStructure<SuccessfullRideDTO>> completeRide(@RequestParam int bookingId, @RequestParam String payType) {
+		return driverService.successfullRide(bookingId,payType);
 	}
+	
+	@PutMapping("completeRideByUPI/{bookingId}")
+	public ResponseEntity<ResponseStructure<QRCodeDTO>> completeRideByUPI(@RequestParam int bookingId) {
+		return driverService.rideCompletedWithUPI(bookingId);
+	}
+	
+	@PostMapping("confirmUPIPayment/{bookingId}/{payType}")
+	public ResponseEntity<ResponseStructure<SuccessfullRideDTO>> confirmUPIPayment(@RequestParam int bookingId, @RequestParam String payType) {
+		return driverService.successfullRide(bookingId,payType);
+	}
+	
 	
 	@DeleteMapping("cancelBookingByDriver")
 	public ResponseEntity<ResponseStructure<Bookings>> cancelBookingByDriver(@RequestHeader int driverID, @RequestHeader int bookingID) {
@@ -73,5 +86,10 @@ public class DriverController {
 	@PutMapping("changeActiveStatus")
 	public ResponseEntity<ResponseStructure<Driver>> changeActiveStatus(@RequestHeader int driverId) {
 		return driverService.changeActiveStatus(driverId);
+	}
+	
+	@PostMapping("/startRide/{otp}/{driverID}/{bookingID}")
+	public ResponseEntity<ResponseStructure<Bookings>> startRide(@RequestParam int otp, @RequestParam int driverID, @RequestParam int bookingID) {
+		return driverService.startRide(otp,driverID,bookingID);
 	}
 }

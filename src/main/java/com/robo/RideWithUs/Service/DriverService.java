@@ -1,7 +1,6 @@
 package com.robo.RideWithUs.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +30,7 @@ import com.robo.RideWithUs.Exceptions.DriverBlockedException;
 import com.robo.RideWithUs.Exceptions.DriverNotFoundException;
 import com.robo.RideWithUs.Exceptions.DriverNotFoundExceptionForthisNumber;
 import com.robo.RideWithUs.Exceptions.DriverNotFoundWithMobileNumberException;
+import com.robo.RideWithUs.Exceptions.InvalidOTPException;
 import com.robo.RideWithUs.Exceptions.VehicleNotFoundException;
 import com.robo.RideWithUs.Repository.BookingRepository;
 import com.robo.RideWithUs.Repository.CustomerRepository;
@@ -60,6 +60,12 @@ public class DriverService {
 	
 	@Autowired
 	PaymentRepository paymentRepository;
+	
+	@Autowired
+	BookingService bookingService;
+	
+	@Autowired
+	MailService mailService;
 
 	public ResponseEntity<ResponseStructure<Driver>> registerDriver(RegisterDriverVehicleDTO driverVehicleDTO) {
 		
@@ -102,6 +108,40 @@ public class DriverService {
 		responseStructure.setStatusCode(HttpStatus.ACCEPTED.value());
 		responseStructure.setMessage("Driver saved successfully");
 		responseStructure.setData(saveddriver);
+		
+		String subject = "Welcome to RideWithUs – Driver Registration Successful";
+
+        String message = """
+                Hello %s,
+
+                Congratulations! 🎉
+                You have been successfully registered as a driver with RideWithUs.
+
+                Driver Details:
+                ------------------------
+                Name        : %s
+                Mobile No   : %d
+                Vehicle     : %s %s
+                Vehicle No  : %s
+                City        : %s
+
+                You can now start accepting ride requests from customers.
+
+                Drive safe and earn more with RideWithUs 🚗💰
+
+                Regards,
+                RideWithUs Team
+                """.formatted(
+                driver.getDriverName(),
+                driver.getDriverName(),
+                driver.getMobileNumber(),
+                vehicle.getBrandName(),
+                vehicle.getModal(),
+                vehicle.getVehicleNumber(),
+                vehicle.getCity()
+        );
+
+        mailService.sendMail(driver.getMailID(), subject, message);
 		
 		return new ResponseEntity<ResponseStructure<Driver>>(responseStructure,HttpStatus.ACCEPTED);
 		
@@ -207,23 +247,8 @@ public class DriverService {
 		return new ResponseEntity<ResponseStructure<BookingHistoryDTO>>(responseStructure,HttpStatus.FOUND);
 	}
 
-
-
-	public void completeRide(int bookingId, String payType) {
-		
-		Bookings bookings = bookingRepository.findById(bookingId).orElseThrow(()-> new BookingNotFoundException());
-		
-		if(payType.equalsIgnoreCase("CASH")) {
-				successfullRide(bookingId, payType);
-		}
-		else {
-			rideCompletedWithUPI(bookingId, payType);
-			successfullRide(bookingId, payType);
-		}
-		
-	}
 	
-	public ResponseEntity<ResponseStructure<SuccessfullRideDTO>> successfullRide(int bookingId, String payType) {
+	public ResponseEntity<ResponseStructure<SuccessfullRideDTO>> successfullRide(int bookingId, String paytype) {
 		
 		Bookings bookings = bookingRepository.findById(bookingId).orElseThrow(()-> new BookingNotFoundException());
 		
@@ -243,7 +268,7 @@ public class DriverService {
 		payment.setAmount(bookings.getFare()+customer.getPenalty());
 		payment.setBookings(bookings);
 		payment.setCustomer(customer);
-		payment.setPaymentType(payType);
+		payment.setPaymentType(paytype);
 		payment.setVehicle(vehicle);
 		
 		bookingRepository.save(bookings);
@@ -267,7 +292,7 @@ public class DriverService {
 	
 	}
 	
-	public ResponseEntity<ResponseStructure<QRCodeDTO>> rideCompletedWithUPI(int bookingId, String payType) {
+	public ResponseEntity<ResponseStructure<QRCodeDTO>> rideCompletedWithUPI(int bookingId) {
 		
 		Bookings bookings = bookingRepository.findById(bookingId).orElseThrow(()-> new BookingNotFoundException()); 
 		
@@ -293,8 +318,6 @@ public class DriverService {
 		
 		return new ResponseEntity<ResponseStructure<QRCodeDTO>>(responseStructure,HttpStatus.ACCEPTED);
 		
-		
-		
 	}
 
 
@@ -304,12 +327,12 @@ public class DriverService {
 		Bookings booking = bookingRepository.findById(bookingID).orElseThrow(()-> new BookingNotFoundException()); 
 		Driver driver = driverRepository.findById(driverID).orElseThrow(()-> new DriverNotFoundException());
 		
-		 // ✅ Prevent double cancellation
+		 //  Prevent double cancellation
 	    if (booking.getBookingStatus().startsWith("CANCELLED")) {
 	        throw new RuntimeException("Booking already cancelled");
 	    }
 
-	    // ✅ Count today's driver cancellations
+	    //  Count today's driver cancellations
 	    LocalDate today = LocalDate.now();
 	    int cancelledCount = bookingRepository
 	            .countByVehicle_Driver_IdAndBookingStatusAndBookingDateBetween(
@@ -319,15 +342,15 @@ public class DriverService {
 	                    today.plusDays(1).atStartOfDay()
 	            );
 
-	    // ✅ Cancel booking
+	    //  Cancel booking
 	    booking.setBookingStatus("CANCELLED BY DRIVER");
 
-	    // ✅ Block driver if limit exceeded
+	    //  Block driver if limit exceeded
 	    if (cancelledCount + 1 >= 3) {
 	        driver.setStatus("BLOCKED");
 	    }
 
-	    // ✅ Make vehicle available
+	    //  Make vehicle available
 	    Vehicle vehicle = driver.getVehicle();
 	    if (vehicle != null) {
 	        vehicle.setAvailabilityStatus("AVAILABLE");
@@ -376,6 +399,71 @@ public class DriverService {
 	    return new ResponseEntity<>(response, HttpStatus.ACCEPTED);
 		
 	}
+
+
+
+	public ResponseEntity<ResponseStructure<Bookings>> startRide(int otp, int driverID, int bookingID) {
+		
+		Driver driver = driverRepository.findById(driverID).orElseThrow(()-> new DriverNotFoundException());
+		
+		Bookings booking = bookingRepository.findById(bookingID).orElseThrow(()-> new BookingNotFoundException());
+		
+		if(booking.getOTP()!=otp) {
+			throw new InvalidOTPException();
+		}
+		
+		booking.setBookingStatus("ONGOING");
+		booking.setOTP(bookingService.generateOtp());
+		
+		ResponseStructure<Bookings> responseStructure = new ResponseStructure<Bookings>();
+		responseStructure.setData(booking);
+		responseStructure.setMessage("Your Ride has started!.");
+		responseStructure.setStatusCode(HttpStatus.ACCEPTED.value());
+		
+		String subject = "Ride Started – RideWithUs";
+
+        String message = """
+                Hello %s,
+
+                🚗 Your ride has officially started!
+
+                Ride Details:
+                -------------------------
+                Driver Name : %s
+                Vehicle     : %s %s
+                From        : %s
+                To          : %s
+                Status      : %s
+
+                🔐 Ride Completion OTP: %d
+                (Please share this OTP with the driver to complete the ride)
+
+                Have a safe and pleasant journey 😊
+
+                Regards,
+                RideWithUs Team
+                """.formatted(
+                booking.getCustomer().getCustomerName(),
+                driver.getDriverName(),
+                booking.getVehicle().getBrandName(),
+                booking.getVehicle().getModal(),
+                booking.getSourceLocation(),
+                booking.getDestinationLocation(),
+                booking.getBookingStatus(),
+                booking.getOTP()
+        );
+
+        mailService.sendMail(
+                booking.getCustomer().getCutomerEmailID(),
+                subject,
+                message
+        );
+		
+		return new ResponseEntity<>(responseStructure,HttpStatus.ACCEPTED);
+	
+	}
+	
+	
 	
 	
 

@@ -36,6 +36,14 @@ public class BookingService {
 	
 	@Autowired
 	BookingRepository bookingRepository;
+	
+	@Autowired
+	MailService mailService;
+
+	
+	public int generateOtp() {
+	    return (int) (Math.random() * 9000) + 1000; // 4-digit OTP
+	}
 
 	public ResponseEntity<ResponseStructure<Bookings>> bookVehicle(long mobileNo, BookVehicelDTO bookVehicledto) {
 		
@@ -63,7 +71,8 @@ public class BookingService {
 		bookings.setDistanceTravelled(bookVehicledto.getDistanceTravelled());
 		bookings.setEstimatedTimeRequired(bookVehicledto.getEstiamtedTime());
 		bookings.setBookingDate(LocalDateTime.now());
-		bookings.setBookingStatus("ONGOING");
+		bookings.setBookingStatus("PENDING");
+		bookings.setOTP(generateOtp());	//how to generate random otp here
 		bookings.setPaymentStatus("NOT PAID");
 		customer.getBookingslist().add(bookings);
 		customer.setActiveBookingFlag(true);
@@ -79,6 +88,47 @@ public class BookingService {
 		responseStructure.setStatusCode(HttpStatus.ACCEPTED.value());
 		responseStructure.setMessage("Booking has been done!.");
 		responseStructure.setData(bookings);
+		
+		try {
+            String subject = "RideWithUs - Booking Confirmed ";
+
+            String message = """
+                    Hello %s,
+
+                    Your ride has been successfully booked!
+
+                    Booking Details:
+                    -----------------------
+                    Source      : %s
+                    Destination : %s
+                    Vehicle     : %s
+                    Driver      : %s
+                    Fare        : ₹%.2f
+                    Distance    : %.2f km
+                    Status      : %s
+
+                    Thank you for choosing RideWithUs.
+                    Have a safe journey!
+
+                    Regards,
+                    RideWithUs Team
+                    """.formatted(
+                    customer.getCustomerName(),
+                    bookings.getSourceLocation(),
+                    bookings.getDestinationLocation(),
+                    vehicle.getBrandName() + " " + vehicle.getModal(),
+                    driver.getDriverName(),
+                    bookings.getFare(),
+                    bookings.getDistanceTravelled(),
+                    bookings.getBookingStatus()
+            );
+
+            mailService.sendMail(customer.getCutomerEmailID(), subject, message);
+
+        } catch (Exception e) {
+            
+            System.out.println("Mail sending failed: " + e.getMessage());
+        }
 		
 		return new ResponseEntity<ResponseStructure<Bookings>>(responseStructure,HttpStatus.ACCEPTED);
 		

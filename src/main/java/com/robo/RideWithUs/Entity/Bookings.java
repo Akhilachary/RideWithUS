@@ -28,7 +28,8 @@ public class Bookings {
 	@ManyToOne
 	@JoinColumn(name = "vehicle_id")
 	private Vehicle vehicle;
-
+	
+	private int OTP;
 	private String sourceLocation;
 	private String destinationLocation;
 	private double distanceTravelled;
@@ -139,14 +140,24 @@ public class Bookings {
 	public void setPayment(Payment payment) {
 		this.payment = payment;
 	}
+	
 
-	public Bookings(int id, Customer customer, Vehicle vehicle, String sourceLocation, String destinationLocation,
-			double distanceTravelled, int fare, int estimatedTimeRequired, LocalDateTime bookingDate,
-			String paymentStatus, String bookingStatus, Payment payment) {
+	public int getOTP() {
+		return OTP;
+	}
+
+	public void setOTP(int oTP) {
+		OTP = oTP;
+	}
+
+	public Bookings(int id, Customer customer, Vehicle vehicle, int oTP, String sourceLocation,
+			String destinationLocation, double distanceTravelled, int fare, int estimatedTimeRequired,
+			LocalDateTime bookingDate, String paymentStatus, String bookingStatus, Payment payment) {
 		super();
 		this.id = id;
 		this.customer = customer;
 		this.vehicle = vehicle;
+		OTP = oTP;
 		this.sourceLocation = sourceLocation;
 		this.destinationLocation = destinationLocation;
 		this.distanceTravelled = distanceTravelled;
@@ -157,6 +168,8 @@ public class Bookings {
 		this.bookingStatus = bookingStatus;
 		this.payment = payment;
 	}
+
+	
 
 	public Bookings() {
 		super();
