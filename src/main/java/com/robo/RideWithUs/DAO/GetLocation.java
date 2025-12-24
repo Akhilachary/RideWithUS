@@ -8,8 +8,12 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import com.robo.RideWithUs.DTO.DestinationLocationResponse;
 import com.robo.RideWithUs.Exceptions.APIwillNotGivingTheLocationException;
+<<<<<<< HEAD
 import com.robo.RideWithUs.Exceptions.LocationIQErrorForCityNameException;
 import com.robo.RideWithUs.Exceptions.LocationNotFoundForCityNameException;
+=======
+import com.robo.RideWithUs.Exceptions.IncorrectLocationException;
+>>>>>>> main
 
 @Service
 public class GetLocation {
@@ -48,7 +52,7 @@ public class GetLocation {
 			System.out.println("ERROR: " + ex.getMessage());
 		}
 
-		return "Unkown";
+		throw new IncorrectLocationException();
 	}
 
 	private static final String API_KEY1 = "pk.9f97384d7176ae66c2b751ed432be655";

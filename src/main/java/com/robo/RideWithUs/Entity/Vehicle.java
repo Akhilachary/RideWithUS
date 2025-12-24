@@ -19,7 +19,7 @@ public class Vehicle {
 	private String modal;
 	private int capacity;
 	private String city;
-	private String availabilityStatus = "available";
+	private String availabilityStatus = "AVAILABLE";
 	private double pricePerKM;
 	private int averageSpeed;
 	

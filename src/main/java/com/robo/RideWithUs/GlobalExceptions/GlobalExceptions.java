@@ -7,6 +7,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.robo.RideWithUs.DTO.ResponseStructure;
 import com.robo.RideWithUs.Exceptions.APIwillNotGivingTheLocationException;
+import com.robo.RideWithUs.Exceptions.CustomerExistAlreadyException;
+import com.robo.RideWithUs.Exceptions.CustomerNotFoundException;
+import com.robo.RideWithUs.Exceptions.DriverAlreadyExistException;
+import com.robo.RideWithUs.Exceptions.DriverBlockedException;
+import com.robo.RideWithUs.Exceptions.DriverNotAvailableException;
+import com.robo.RideWithUs.Exceptions.IncorrectLocationException;
+import com.robo.RideWithUs.Exceptions.InvalidOTPException;
+import com.robo.RideWithUs.Exceptions.LocationNotFoundException;
+import com.robo.RideWithUs.Exceptions.NoActiveBookingFoundException;
 
 
 @RestControllerAdvice
@@ -108,6 +117,7 @@ public class GlobalExceptions {
 		
 	}
 	
+<<<<<<< HEAD
 	@ExceptionHandler(com.robo.RideWithUs.Exceptions.LocationNotFoundForCityNameException.class)
 	public ResponseEntity<ResponseStructure<String>> LocationNotFoundForCityNameException(com.robo.RideWithUs.Exceptions.LocationNotFoundForCityNameException ex) {
 		
@@ -131,4 +141,133 @@ public class GlobalExceptions {
 	    return new ResponseEntity<ResponseStructure<String>>(response, HttpStatus.SERVICE_UNAVAILABLE);
 		
 	}
+=======
+	@ExceptionHandler(IncorrectLocationException.class)
+	public ResponseEntity<ResponseStructure<String>> incorrectLocationException() {
+		
+		ResponseStructure<String> response = new ResponseStructure<>();
+	    response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	    response.setMessage("Location Entered is incorrect.");
+	    response.setData("PROVIDE VALID LOCATION");
+
+	    return new ResponseEntity<ResponseStructure<String>>(response, HttpStatus.BAD_REQUEST);
+	}
+	
+	@ExceptionHandler(NoActiveBookingFoundException.class)
+	public ResponseEntity<ResponseStructure<String>> noActiveBookingFoundException() {
+		ResponseStructure<String> response = new ResponseStructure<>();
+	    response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	    response.setMessage("NoActiveBookingFoundException");
+	    response.setData(null);
+
+	    return new ResponseEntity<ResponseStructure<String>>(response, HttpStatus.BAD_REQUEST);
+		
+	}
+	
+	@ExceptionHandler(com.robo.RideWithUs.Exceptions.VehicleNotAvailableException.class)
+	public ResponseEntity<ResponseStructure<String>> VehicleNotAvailableException() {
+		ResponseStructure<String> response = new ResponseStructure<>();
+	    response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	    response.setMessage("Sorry! Vehilce Already Booked");
+	    response.setData(null);
+
+	    return new ResponseEntity<ResponseStructure<String>>(response, HttpStatus.BAD_REQUEST);
+	}
+	
+	@ExceptionHandler(DriverNotAvailableException.class)
+	public ResponseEntity<ResponseStructure<String>> driverNotAvailableException(
+	        DriverNotAvailableException ex) {
+
+	    ResponseStructure<String> response = new ResponseStructure<>();
+	    response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	    response.setMessage("Sorry! Driver is not available at the moment");
+	    response.setData(null);
+
+	    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+	}
+
+	
+	@ExceptionHandler(CustomerNotFoundException.class)
+	public ResponseEntity<ResponseStructure<String>> CustomerNotFoundException() {
+		
+		ResponseStructure<String> response = new ResponseStructure<>();
+	    response.setStatusCode(HttpStatus.NOT_FOUND.value());
+	    response.setMessage("Customer is Not Found With this Id");
+	    response.setData(null);
+
+	    return new ResponseEntity<ResponseStructure<String>>(response, HttpStatus.NOT_FOUND);
+		
+		
+	}
+	
+	@ExceptionHandler(DriverAlreadyExistException.class)
+	public ResponseEntity<ResponseStructure<String>> DriverAlreadyExistException() {
+		ResponseStructure<String> response = new ResponseStructure<>();
+	    response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	    response.setMessage("Driver is Already exists with this mobileNumber");
+	    response.setData(null);
+
+	    return new ResponseEntity<ResponseStructure<String>>(response, HttpStatus.BAD_REQUEST);
+	}
+	
+	@ExceptionHandler(CustomerExistAlreadyException.class)
+	public ResponseEntity<ResponseStructure<String>> CustomerExistAlreadyException() {
+		ResponseStructure<String> response = new ResponseStructure<>();
+	    response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	    response.setMessage("Customer is Already exists with this mobileNumber");
+	    response.setData(null);
+
+	    return new ResponseEntity<ResponseStructure<String>>(response, HttpStatus.BAD_REQUEST);
+	}
+	
+	@ExceptionHandler(DriverBlockedException.class)
+	public ResponseEntity<ResponseStructure<String>> DriverBlockedException() {
+		ResponseStructure<String> response = new ResponseStructure<>();
+	    response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	    response.setMessage("DRIVER ALREADY BLOCKED");
+	    response.setData(null);
+
+	    return new ResponseEntity<ResponseStructure<String>>(response, HttpStatus.BAD_REQUEST);
+	}
+	
+	@ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ResponseStructure<String>> handleIllegalStateException(
+            IllegalStateException ex) {
+
+        ResponseStructure<String> response = new ResponseStructure<>();
+        response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        response.setMessage(ex.getMessage());
+        response.setData("INVALID APPLICATION STATE");
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+	
+	 @ExceptionHandler(LocationNotFoundException.class)
+	    public ResponseEntity<ResponseStructure<String>> handleLocationNotFoundException(
+	            LocationNotFoundException ex) {
+
+	        ResponseStructure<String> response = new ResponseStructure<>();
+	        response.setStatusCode(HttpStatus.NOT_FOUND.value());
+	        response.setMessage(
+	                ex.getMessage() != null 
+	                ? ex.getMessage() 
+	                : "Location not found. Please provide a valid city/location."
+	        );
+	        response.setData("INVALID LOCATION");
+
+	        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+	    }
+	 
+	 @ExceptionHandler(InvalidOTPException.class)
+	 public ResponseEntity<ResponseStructure<String>> invalidOTPException() {
+		 ResponseStructure<String> response = new ResponseStructure<>();
+		    response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+		    response.setMessage("Invalid OTP. Please enter the correct OTP.");
+		    response.setData(null);
+
+		    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+	 }
+>>>>>>> main
 }
+
+

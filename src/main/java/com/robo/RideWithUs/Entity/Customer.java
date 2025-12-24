@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 
 
 @Entity
@@ -15,23 +16,50 @@ public class Customer {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	private int id;
+	private Integer id;
 	private String customerName;
 	private int cutomerAge;
 	private String customerGender;
 	private long mobileNumber;
 	private String cutomerEmailID;
 	private String customerCurrentLocation;
+	private boolean activeBookingFlag=false;
+	private String role="CUSTOMER";
+	private double penalty;
 	
 	@OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
 	private List<Bookings> bookingslist;
+	
+	@OneToOne
+	private User user;
 
 	
-	public int getId() {
-		return id;
+	public User getUser() {
+		return user;
 	}
-	public void setId(int id) {
+	public void setUser(User user) {
+		this.user = user;
+	}
+	public void setId(Integer id) {
 		this.id = id;
+	}
+	public double getPenalty() {
+		return penalty;
+	}
+	public void setPenalty(double penalty) {
+		this.penalty = penalty;
+	}
+	public boolean isActiveBookingFlag() {
+		return activeBookingFlag;
+	}
+	public void setActiveBookingFlag(boolean activeBookingFlag) {
+		this.activeBookingFlag = activeBookingFlag;
+	}
+	public long getMobileNumber() {
+		return mobileNumber;
+	}
+	public Integer getId() {
+		return id;
 	}
 	public String getCustomerName() {
 		return customerName;
@@ -75,17 +103,31 @@ public class Customer {
 	public void setBookingslist(List<Bookings> bookingslist) {
 		this.bookingslist = bookingslist;
 	}
-	public Customer(int id, String customerName, int cutomerAge, String customerGender, long mobileNumber,
-			String cutomerEmailID, String customerCurrentLocation, List<Bookings> bookingslist) {
+	
+	
+	public String getRole() {
+		return role;
+	}
+	public void setRole(String role) {
+		this.role = role;
+	}
+	
+	public Customer(Integer id, String customerName, int cutomerAge, String customerGender, long mobileNumber,
+			String cutomerEmailID, String customerCurrentLocation, boolean activeBookingFlag, String role,
+			double penalty, List<Bookings> bookingslist, User user) {
 		super();
 		this.id = id;
 		this.customerName = customerName;
 		this.cutomerAge = cutomerAge;
 		this.customerGender = customerGender;
-		this.mobileNumber=mobileNumber;
+		this.mobileNumber = mobileNumber;
 		this.cutomerEmailID = cutomerEmailID;
 		this.customerCurrentLocation = customerCurrentLocation;
+		this.activeBookingFlag = activeBookingFlag;
+		this.role = role;
+		this.penalty = penalty;
 		this.bookingslist = bookingslist;
+		this.user = user;
 	}
 	public Customer() {
 		super();

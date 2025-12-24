@@ -1,5 +1,7 @@
 package com.robo.RideWithUs.Entity;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
@@ -7,6 +9,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 
 @Entity
@@ -18,18 +21,40 @@ public class Driver {
 	private String licenseNumber;
 	private String upiID;
 	private String driverName;
-	private String status="Active";
+	private String status="ACTIVE";
 	private int age;
 	private long mobileNumber;
 	private String gender;
 	private String mailID;
+	private String role="DRIVER";
 	
 	
 	 @OneToOne(mappedBy = "driver", cascade = CascadeType.ALL)
 	 @JsonManagedReference
 	private Vehicle vehicle;
+	 
+	 @OneToMany
+	private List<Bookings> bookings;
+	 
+	 @OneToOne
+	 private User user;
 	
 	
+	public User getUser() {
+		return user;
+	}
+	 public void setUser(User user) {
+		 this.user = user;
+	 }
+	public List<Bookings> getBookings() {
+		return bookings;
+	}
+	 public void setBookings(List<Bookings> bookings) {
+		 this.bookings = bookings;
+	 }
+	 public void setId(int id) {
+		 this.id = id;
+	 }
 	public int getId() {
 		return id;
 	}
@@ -87,9 +112,19 @@ public class Driver {
 	public void setVehicle(Vehicle vehicle) {
 		this.vehicle = vehicle;
 	}
-	public Driver( String licenseNumber, String upiID, String driverName, String status, int age,
-			long mobileNumber, String gender, String mailID, Vehicle vehicle) {
+	public String getRole() {
+		return role;
+	}
+	public void setRole(String role) {
+		this.role = role;
+	}
+	
+	
+	public Driver(int id, String licenseNumber, String upiID, String driverName, String status, int age,
+			long mobileNumber, String gender, String mailID, String role, Vehicle vehicle, List<Bookings> bookings,
+			User user) {
 		super();
+		this.id = id;
 		this.licenseNumber = licenseNumber;
 		this.upiID = upiID;
 		this.driverName = driverName;
@@ -98,18 +133,16 @@ public class Driver {
 		this.mobileNumber = mobileNumber;
 		this.gender = gender;
 		this.mailID = mailID;
+		this.role = role;
 		this.vehicle = vehicle;
+		this.bookings = bookings;
+		this.user = user;
 	}
 	public Driver() {
 		super();
 	}
 	
-	@Override
-	public String toString() {
-		return "Driver [id=" + id + ", licenseNumber=" + licenseNumber + ", upiID=" + upiID + ", driverName="
-				+ driverName + ", status=" + status + ", age=" + age + ", mobileNumber=" + mobileNumber + ", gender="
-				+ gender + ", mailID=" + mailID + ", vehicle=" + vehicle + "]";
-	}
+	
 	
 	
 }

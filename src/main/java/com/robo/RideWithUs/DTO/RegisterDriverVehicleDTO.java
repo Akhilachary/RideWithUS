@@ -1,6 +1,7 @@
 package com.robo.RideWithUs.DTO;
 
 public class RegisterDriverVehicleDTO {
+	
 	private String licenseNumber;
 	private String upiID;
 	private String driverName;
@@ -17,8 +18,17 @@ public class RegisterDriverVehicleDTO {
 	private double latitude;
 	private long priceperKilometer;
 	private int averageSpeed;
+	private String password;
 	
 	
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
 	public int getAverageSpeed() {
 		return averageSpeed;
 	}
@@ -149,10 +159,11 @@ public class RegisterDriverVehicleDTO {
 
 	
 
+	
 	public RegisterDriverVehicleDTO(String licenseNumber, String upiID, String driverName, int driverAge,
 			long driverMobileNumber, String gender, String mailID, String vehicleName, String vehicleNumber,
 			String vehicleModel, String vehicletype, int capacity, double longitude, double latitude,
-			long priceperKilometer, int averageSpeed) {
+			long priceperKilometer, int averageSpeed, String password) {
 		super();
 		this.licenseNumber = licenseNumber;
 		this.upiID = upiID;
@@ -170,6 +181,7 @@ public class RegisterDriverVehicleDTO {
 		this.latitude = latitude;
 		this.priceperKilometer = priceperKilometer;
 		this.averageSpeed = averageSpeed;
+		this.password = password;
 	}
 
 	public RegisterDriverVehicleDTO() {

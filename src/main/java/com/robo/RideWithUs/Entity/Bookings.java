@@ -2,6 +2,9 @@ package com.robo.RideWithUs.Entity;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,20 +19,27 @@ public class Bookings {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private int id;
+	
 	@ManyToOne
 	@JoinColumn(name = "customer_id")
+	@JsonIgnore
 	private Customer customer;
 
 	@ManyToOne
-	@JoinColumn(name = "driver_id")
-	private Driver driver;
-
+	@JoinColumn(name = "vehicle_id")
+	private Vehicle vehicle;
+	
+	private int OTP;
 	private String sourceLocation;
 	private String destinationLocation;
 	private double distanceTravelled;
 	private int fare;
-	private String estimatedTimeRequired;
+	private int estimatedTimeRequired;
 	private LocalDateTime bookingDate;
+	private String paymentStatus;
+	
+	@JsonFormat(pattern = "dd-MM-yyyy HH:mm")
+	private String bookingStatus;
 
 	@OneToOne
 	@JoinColumn(name = "payment_id")
@@ -51,12 +61,12 @@ public class Bookings {
 		this.customer = customer;
 	}
 
-	public Driver getDriver() {
-		return driver;
+	public Vehicle getVehicle() {
+		return vehicle;
 	}
 
-	public void setDriver(Driver driver) {
-		this.driver = driver;
+	public void setVehicle(Vehicle vehicle) {
+		this.vehicle = vehicle;
 	}
 
 	public String getSourceLocation() {
@@ -91,11 +101,11 @@ public class Bookings {
 		this.fare = fare;
 	}
 
-	public String getEstimatedTimeRequired() {
+	public int getEstimatedTimeRequired() {
 		return estimatedTimeRequired;
 	}
 
-	public void setEstimatedTimeRequired(String estimatedTimeRequired) {
+	public void setEstimatedTimeRequired(int estimatedTimeRequired) {
 		this.estimatedTimeRequired = estimatedTimeRequired;
 	}
 
@@ -107,6 +117,22 @@ public class Bookings {
 		this.bookingDate = bookingDate;
 	}
 
+	public String getPaymentStatus() {
+		return paymentStatus;
+	}
+
+	public void setPaymentStatus(String paymentStatus) {
+		this.paymentStatus = paymentStatus;
+	}
+
+	public String getBookingStatus() {
+		return bookingStatus;
+	}
+
+	public void setBookingStatus(String bookingStatus) {
+		this.bookingStatus = bookingStatus;
+	}
+
 	public Payment getPayment() {
 		return payment;
 	}
@@ -114,25 +140,41 @@ public class Bookings {
 	public void setPayment(Payment payment) {
 		this.payment = payment;
 	}
+	
 
-	public Bookings() {
-		super();
+	public int getOTP() {
+		return OTP;
 	}
 
-	public Bookings(int id, Customer customer, Driver driver, String sourceLocation, String destinationLocation,
-			double distanceTravelled, int fare, String estimatedTimeRequired, LocalDateTime bookingDate,
-			Payment payment) {
+	public void setOTP(int oTP) {
+		OTP = oTP;
+	}
+
+	public Bookings(int id, Customer customer, Vehicle vehicle, int oTP, String sourceLocation,
+			String destinationLocation, double distanceTravelled, int fare, int estimatedTimeRequired,
+			LocalDateTime bookingDate, String paymentStatus, String bookingStatus, Payment payment) {
 		super();
 		this.id = id;
 		this.customer = customer;
-		this.driver = driver;
+		this.vehicle = vehicle;
+		OTP = oTP;
 		this.sourceLocation = sourceLocation;
 		this.destinationLocation = destinationLocation;
 		this.distanceTravelled = distanceTravelled;
 		this.fare = fare;
 		this.estimatedTimeRequired = estimatedTimeRequired;
 		this.bookingDate = bookingDate;
+		this.paymentStatus = paymentStatus;
+		this.bookingStatus = bookingStatus;
 		this.payment = payment;
 	}
+
+	
+
+	public Bookings() {
+		super();
+	}
+
+	
 
 }
