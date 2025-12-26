@@ -38,309 +38,238 @@ import com.robo.RideWithUs.Repository.VehicleRepository;
 public class CustomerService {
 
 	@Autowired
-	GetLocation getLocation;
-	@Autowired
-	CustomerRepository customerrepository;
+	private GetLocation getLocation;
 
 	@Autowired
-	VehicleRepository vehicleRepository;
-	
+	private CustomerRepository customerRepository;
+
 	@Autowired
-	BookingRepository bookingRepository;
-	
+	private VehicleRepository vehicleRepository;
+
 	@Autowired
-	Distance_Duration_Service distance_Duration_Service;
-	
+	private BookingRepository bookingRepository;
+
 	@Autowired
-	UserRepository userrepository;
-	
+	private Distance_Duration_Service distanceService;
+
+	@Autowired
+	private UserRepository userRepository;
+
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
-	public ResponseEntity<ResponseStructure<Customer>> registerCustomer(CustomerRegisterDTO customerRegisterDTO) {
-		
-		Optional<Customer> c = customerrepository.findByMobileNumber(customerRegisterDTO.getMobileNo());
-		
-		if(c.isPresent()) {
+	// ---------------- REGISTER CUSTOMER ----------------
+	public ResponseEntity<ResponseStructure<Customer>> registerCustomer(
+			CustomerRegisterDTO dto) {
+
+		Optional<Customer> existing =
+				customerRepository.findByMobileNumber(dto.getMobileNo());
+
+		if (existing.isPresent()) {
 			throw new CustomerExistAlreadyException();
 		}
 
 		Customer customer = new Customer();
-		customer.setCustomerName(customerRegisterDTO.getName());
-		customer.setCutomerAge(customerRegisterDTO.getAge());
-		customer.setCustomerGender(customerRegisterDTO.getGender());
-		customer.setMobileNumber(customerRegisterDTO.getMobileNo());
-		customer.setCutomerEmailID(customerRegisterDTO.getEmail());
+		customer.setCustomerName(dto.getName());
+		customer.setCutomerAge(dto.getAge());
+		customer.setCustomerGender(dto.getGender());
+		customer.setMobileNumber(dto.getMobileNo());
+		customer.setCutomerEmailID(dto.getEmail());
 		customer.setCustomerCurrentLocation(
-				getLocation.getLocation(customerRegisterDTO.getLatitude(), customerRegisterDTO.getLongitude()));
+				getLocation.getLocation(dto.getLatitude(), dto.getLongitude()));
 
 		User user = new User();
-		user.setMobileNumber(customerRegisterDTO.getMobileNo());
+		user.setMobileNumber(dto.getMobileNo());
 		user.setRole("Customer");
-		
-		String encodedPassword = passwordEncoder.encode(customerRegisterDTO.getPassword());
-		user.setPassword(encodedPassword);
-		
-//		System.err.println("Raw :"+ customerRegisterDTO.getPassword());
-//		System.err.println(encodedPassword);
-		
-		
-		User saveduser = userrepository.save(user);
-		
-		customer.setUser(saveduser);
-		
-		Customer savedcustomer = customerrepository.save(customer);
+		user.setPassword(passwordEncoder.encode(dto.getPassword()));
 
-		// Response
+		User savedUser = userRepository.save(user);
+		customer.setUser(savedUser);
+
+		Customer savedCustomer = customerRepository.save(customer);
+
 		ResponseStructure<Customer> response = new ResponseStructure<>();
 		response.setStatusCode(HttpStatus.CREATED.value());
 		response.setMessage("Customer registered successfully");
-		response.setData(savedcustomer);
+		response.setData(savedCustomer);
 
-		return new ResponseEntity<ResponseStructure<Customer>>(response, HttpStatus.CREATED);
-
+		return new ResponseEntity<>(response, HttpStatus.CREATED);
 	}
 
-	public ResponseEntity<ResponseStructure<AvailableVehicleDTO>> seeAllAvailableVehicles(
-	        long mobileNumber, String city) {
+	// ---------------- AVAILABLE VEHICLES ----------------
+	public ResponseEntity<ResponseStructure<AvailableVehicleDTO>>
+	seeAllAvailableVehicles(long mobileNumber, String city) {
 
-	    Customer customer = customerrepository.findByMobileNumber(mobileNumber)
-	            .orElseThrow(CustomerNotFoundWithThisMobileNumberException::new);
-	    
-	    if (customer.isActiveBookingFlag()) {
-	        throw new IllegalStateException(
-	            "You already have an active booking. Please complete or cancel it first."
-	        );
-	    }
+		Customer customer = customerRepository.findByMobileNumber(mobileNumber)
+				.orElseThrow(CustomerNotFoundWithThisMobileNumberException::new);
 
+		if (customer.isActiveBookingFlag()) {
+			throw new IllegalStateException(
+					"You already have an active booking");
+		}
 
-	    String customerLocation = customer.getCustomerCurrentLocation();
+		String customerLocation = customer.getCustomerCurrentLocation();
 
-	    DestinationLocationResponse destinationCoords =
-	            getLocation.getCoordinates1(city);
+		DestinationLocationResponse dest =
+				getLocation.getCoordinates1(city);
+		DestinationLocationResponse source =
+				getLocation.getCoordinates2(customerLocation);
 
-	    DestinationLocationResponse customerCoords =
-	            getLocation.getCoordinates2(customerLocation);
+		if (dest == null || source == null) {
+			throw new LocationNotFoundException();
+		}
 
-	    if (destinationCoords == null || customerCoords == null) {
-	        throw new LocationNotFoundException();
-	    }
+		Distance_Duration_Response distanceResponse =
+				distanceService.getDistanceAndDuration(
+						source.getLatitude(), source.getLongitude(),
+						dest.getLatitude(), dest.getLongitude());
 
-	    Distance_Duration_Response distanceResponse =
-	            distance_Duration_Service.getDistanceAndDuration(
-	                    customerCoords.getLatitude(),
-	                    customerCoords.getLongitude(),
-	                    destinationCoords.getLatitude(),
-	                    destinationCoords.getLongitude()
-	            );
+		double distanceKm = distanceResponse.getDistanceInKm();
 
-	    double distanceKm = distanceResponse.getDistanceInKm();
+		AvailableVehicleDTO dto = new AvailableVehicleDTO();
+		dto.setCustomer(customer);
+		dto.setSourceLocation(customerLocation);
+		dto.setDestinationLocation(city);
+		dto.setDistance(distanceKm);
 
-	    AvailableVehicleDTO dto = new AvailableVehicleDTO();
-	    dto.setCustomer(customer);
-	    dto.setSourceLocation(customerLocation);
-	    dto.setDestinationLocation(city);
-	    dto.setDistance(distanceKm);
+		List<Vehicle> vehicles =
+				vehicleRepository.findByCityAndAvailabilityStatus(
+						customerLocation, "AVAILABLE");
 
-	    // ✅ Fetch vehicles near CUSTOMER current location
-	    List<Vehicle> vehicles =
-	            vehicleRepository.findByCityAndAvailabilityStatus(
-	                    customerLocation, "AVAILABLE");
+		for (Vehicle v : vehicles) {
 
-	    for (Vehicle v : vehicles) {
+			if (v.getDriver() == null ||
+					!v.getDriver().getStatus().equalsIgnoreCase("ACTIVE"))
+				continue;
 
-	        // Driver must exist
-	        if (v.getDriver() == null) continue;
+			VehicleDetail detail = new VehicleDetail();
 
-	        // Driver must be AVAILABLE (not BLOCKED / UNAVAILABLE)
-	        if (!v.getDriver().getStatus().equalsIgnoreCase("ACTIVE")) continue;
+			double fare = v.getPricePerKM() * distanceKm;
+			detail.setFare((int) Math.round(fare));
 
-	        VehicleDetail detail = new VehicleDetail();
+			if (v.getAverageSpeed() <= 0) {
+				detail.setEstimatedTime(-1);
+				detail.setEstimatedTimeString("N/A");
+			} else {
+				int minutes =
+						(int) ((distanceKm / v.getAverageSpeed()) * 60);
+				detail.setEstimatedTime(minutes);
+				detail.setEstimatedTimeString(
+						(minutes / 60) + " hours " + (minutes % 60) + " minutes");
+			}
 
-	        // 💰 Fare calculation
-	        double fare = v.getPricePerKM() * distanceKm;
-	        detail.setFare((int) Math.round(fare));
+			detail.setVehicle(v);
+			dto.getAvailableVehicleDetails().add(detail);
+		}
 
-	        // ⏱ Estimated time
-	        if (v.getAverageSpeed() <= 0) {
-	            detail.setEstimatedTime(-1);
-<<<<<<< HEAD
-	            detail.setEstimatedTimeString("N/A");
-	            detail.setFare((int) (v.getPricePerKM() * distanceKm));
-	            detail.setVehicle(v);
-	            availableVehicleDTO.getAvailableVehicleDetails().add(detail);
-	            continue;
-	        }
+		ResponseStructure<AvailableVehicleDTO> response = new ResponseStructure<>();
+		response.setStatusCode(HttpStatus.OK.value());
+		response.setMessage("Available vehicles fetched successfully");
+		response.setData(dto);
 
-
-	     // estimated time
-	        if (v.getAverageSpeed() <= 0) {
-
-	            detail.setEstimatedTime(-1);
-=======
->>>>>>> main
-	            detail.setEstimatedTimeString("N/A");
-	        } else {
-	            int totalMinutes =
-	                    (int) Math.round((distanceKm / v.getAverageSpeed()) * 60);
-
-	            detail.setEstimatedTime(totalMinutes);
-
-	            int hr = totalMinutes / 60;
-	            int min = totalMinutes % 60;
-	            detail.setEstimatedTimeString(hr + " hours " + min + " minutes");
-	        }
-
-	        detail.setVehicle(v);
-	        dto.getAvailableVehicleDetails().add(detail);
-	    }
-
-	    ResponseStructure<AvailableVehicleDTO> response = new ResponseStructure<>();
-	    response.setStatusCode(HttpStatus.OK.value());
-	    response.setMessage("Available vehicles fetched successfully");
-	    response.setData(dto);
-
-	    return new ResponseEntity<>(response, HttpStatus.OK);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
+	// ---------------- ACTIVE BOOKING ----------------
+	public ResponseEntity<ResponseStructure<ActiveBookingDTO>>
+	seeActiveBooking(long mobileNo) {
 
+		Customer customer = customerRepository.findByMobileNumber(mobileNo)
+				.orElseThrow(CustomerNotFoundWithThisMobileNumberException::new);
 
-	public ResponseEntity<ResponseStructure<Customer>> findCustomerByMobileNumber(long mobileNumber) {
+		if (!customer.isActiveBookingFlag()) {
+			throw new NoActiveBookingFoundException();
+		}
 
-		Customer customer = customerrepository.findByMobileNumber(mobileNumber)
-				.orElseThrow(() -> new CustomerNotFoundWithThisMobileNumberException());
+		Bookings booking =
+				bookingRepository.findFirstByCustomerMobileNumberAndBookingStatus(
+						mobileNo, "ONGOING");
 
-		// Response
-		ResponseStructure<Customer> response = new ResponseStructure<>();
-		response.setStatusCode(HttpStatus.FOUND.value());
-		response.setMessage("Customer fetched successfully");
-		response.setData(customer);
+		if (booking == null) {
+			throw new NoActiveBookingFoundException();
+		}
 
-		return new ResponseEntity<ResponseStructure<Customer>>(response, HttpStatus.FOUND);
+		ActiveBookingDTO dto = new ActiveBookingDTO();
+		dto.setCustomerName(customer.getCustomerName());
+		dto.setCustomerMobileNo(mobileNo);
+		dto.setCurrentLocation(customer.getCustomerCurrentLocation());
+		dto.setBookings(booking);
 
+		ResponseStructure<ActiveBookingDTO> response = new ResponseStructure<>();
+		response.setStatusCode(HttpStatus.OK.value());
+		response.setMessage("Active booking found");
+		response.setData(dto);
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	public ResponseEntity<ResponseStructure<Customer>> deleteCustomerByMobileNumber(long mobileNumber) {
+	// ---------------- BOOKING HISTORY ----------------
+	public ResponseEntity<ResponseStructure<BookingHistoryDTO>>
+	seeCustomerBookingHistory(long mobileNo) {
 
-		Customer customer = customerrepository.findByMobileNumber(mobileNumber)
-				.orElseThrow(() -> new CustomerNotFoundWithThisMobileNumberException());
+		Customer customer = customerRepository.findByMobileNumber(mobileNo)
+				.orElseThrow(CustomerNotFoundWithThisMobileNumberException::new);
 
-		customerrepository.delete(customer);
+		List<Bookings> bookings =
+				bookingRepository.findByCustomerMobileNumberAndBookingStatus(
+						mobileNo, "COMPLETED");
 
-		// Response
-		ResponseStructure<Customer> response = new ResponseStructure<>();
-		response.setStatusCode(HttpStatus.GONE.value());
-		response.setMessage("Customer deleted successfully");
-		response.setData(customer);
-
-		return new ResponseEntity<ResponseStructure<Customer>>(response, HttpStatus.GONE);
-
-	}
-
-	public ResponseEntity<ResponseStructure<BookingHistoryDTO>> seeCustomerBookingHistory(long mobileNo) {
-
-		Customer customer = customerrepository.findByMobileNumber(mobileNo).orElseThrow(()-> new CustomerNotFoundWithThisMobileNumberException());
-		
-		List<Bookings> bookings = bookingRepository.findByCustomerMobileNumberAndBookingStatus(mobileNo,"COMPLETED");
-		
+		BookingHistoryDTO history = new BookingHistoryDTO();
 		double totalAmount = 0;
-		
-		BookingHistoryDTO bookingHistoryDTO = new BookingHistoryDTO();
-		
-		for(Bookings b : bookings) {
-			
+
+		for (Bookings b : bookings) {
 			RideDetailDTO dto = new RideDetailDTO();
+			dto.setSourceLocation(b.getSourceLocation());
 			dto.setDestinationLocation(b.getDestinationLocation());
 			dto.setDistance(b.getDistanceTravelled());
 			dto.setFare(b.getFare());
-			dto.setSourceLocation(b.getSourceLocation());
-			
+
 			totalAmount += b.getFare();
-			bookingHistoryDTO.getRideDetailDTOs().add(dto);
+			history.getRideDetailDTOs().add(dto);
 		}
-		
-		bookingHistoryDTO.setTotalAmount(totalAmount);
-		
-		ResponseStructure<BookingHistoryDTO> responseStructure = new ResponseStructure<BookingHistoryDTO>();
-		responseStructure.setStatusCode(HttpStatus.FOUND.value());
-		responseStructure.setMessage("Booking History Fetched Successfully.");
-		responseStructure.setData(bookingHistoryDTO);
-		
-		return new ResponseEntity<ResponseStructure<BookingHistoryDTO>>(responseStructure,HttpStatus.FOUND);
-		
+
+		history.setTotalAmount(totalAmount);
+
+		ResponseStructure<BookingHistoryDTO> response = new ResponseStructure<>();
+		response.setStatusCode(HttpStatus.OK.value());
+		response.setMessage("Booking history fetched successfully");
+		response.setData(history);
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	
-	public ResponseEntity<ResponseStructure<ActiveBookingDTO>> seeActiveBooking(long mobileNo) {
-		
-		Customer customer = customerrepository.findByMobileNumber(mobileNo).orElseThrow(()-> new CustomerNotFoundWithThisMobileNumberException());
-		
-		if(customer.isActiveBookingFlag()) {
-		
-		ActiveBookingDTO activeBookingDTO = new ActiveBookingDTO();
-		activeBookingDTO.setCustomerName(customer.getCustomerName());
-		activeBookingDTO.setCustomerMobileNo(mobileNo);
-		activeBookingDTO.setCurrentLocation(customer.getCustomerCurrentLocation());
-		Bookings bookings = bookingRepository.findFirstByCustomerMobileNumberAndBookingStatus(mobileNo,"ONGOING");
-		if(bookings == null) {
-			throw new NoActiveBookingFoundException();
+	// ---------------- CANCEL BOOKING ----------------
+	public ResponseEntity<ResponseStructure<Bookings>>
+	cancelBookingByCustomer(int customerID, int bookingID) {
+
+		Customer customer = customerRepository.findById(customerID)
+				.orElseThrow(CustomerNotFoundException::new);
+
+		Bookings booking = bookingRepository.findById(bookingID)
+				.orElseThrow(BookingNotFoundException::new);
+
+		if (booking.getBookingStatus().startsWith("CANCELLED")) {
+			throw new RuntimeException("Booking already cancelled");
 		}
-		activeBookingDTO.setBookings(bookings);
-		
-		ResponseStructure<ActiveBookingDTO> responseStructure = new ResponseStructure<ActiveBookingDTO>();
-		responseStructure.setStatusCode(HttpStatus.FOUND.value());
-		responseStructure.setMessage("Active Booking Status");
-		responseStructure.setData(activeBookingDTO);
-		
-		return new ResponseEntity<ResponseStructure<ActiveBookingDTO>>(responseStructure,HttpStatus.NOT_FOUND);
-		
-	}
-		ResponseStructure<ActiveBookingDTO> responseStructure = new ResponseStructure<ActiveBookingDTO>();
-		responseStructure.setStatusCode(HttpStatus.FOUND.value());
-		responseStructure.setMessage("Active Booking Status");
-		responseStructure.setData(null);
-		
-		return new ResponseEntity<ResponseStructure<ActiveBookingDTO>>(responseStructure,HttpStatus.NOT_FOUND);
-		
-	}
 
-	public ResponseEntity<ResponseStructure<Bookings>> cancelBookingByCustomer(int customerID, int bookingID) {
-		// TODO Auto-generated method stub
-		Customer customer = customerrepository.findById(customerID).orElseThrow(()-> new CustomerNotFoundException());
-		Bookings bookings = bookingRepository.findById(bookingID).orElseThrow(()-> new BookingNotFoundException());
-		
-		// Prevent double cancellation
-	    if (bookings.getBookingStatus().startsWith("CANCELLED")) {
-	        throw new RuntimeException("Booking already cancelled");
-	    }
+		if (booking.getVehicle().getDriver() != null) {
+			customer.setPenalty(customer.getPenalty() +
+					booking.getFare() * 0.10);
+		}
 
-	    // Apply penalty ONLY if driver is assigned
-	    if (bookings.getVehicle().getDriver() != null) {
-	        double penalty = bookings.getFare() * 0.10;
-	        customer.setPenalty(customer.getPenalty() + penalty);
-	    }
-		
-		bookings.setBookingStatus("CANCELLED BY CUSTOMER");
-		
-		Vehicle vehicle = bookings.getVehicle();
+		booking.setBookingStatus("CANCELLED BY CUSTOMER");
+		Vehicle vehicle = booking.getVehicle();
 		vehicle.setAvailabilityStatus("AVAILABLE");
-		
-		bookingRepository.save(bookings);
-		customerrepository.save(customer);
-		vehicleRepository.save(vehicle);
-		
-		
-		ResponseStructure<Bookings> responseStructure = new ResponseStructure<Bookings>();
-		responseStructure.setStatusCode(HttpStatus.ACCEPTED.value());
-		responseStructure.setMessage("SUCCESSFULLY CANCELLED BY CUSTOMER");
-		responseStructure.setData(bookings);
-		
-		return new ResponseEntity<ResponseStructure<Bookings>>(responseStructure,HttpStatus.ACCEPTED);
-		
-		
-	}
-	
-	
-	
 
+		bookingRepository.save(booking);
+		customerRepository.save(customer);
+		vehicleRepository.save(vehicle);
+
+		ResponseStructure<Bookings> response = new ResponseStructure<>();
+		response.setStatusCode(HttpStatus.ACCEPTED.value());
+		response.setMessage("Booking cancelled successfully");
+		response.setData(booking);
+
+		return new ResponseEntity<>(response, HttpStatus.ACCEPTED);
+	}
 }
