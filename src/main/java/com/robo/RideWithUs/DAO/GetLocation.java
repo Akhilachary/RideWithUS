@@ -6,14 +6,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
 import com.robo.RideWithUs.DTO.DestinationLocationResponse;
 import com.robo.RideWithUs.Exceptions.APIwillNotGivingTheLocationException;
-<<<<<<< HEAD
+import com.robo.RideWithUs.Exceptions.IncorrectLocationException;
 import com.robo.RideWithUs.Exceptions.LocationIQErrorForCityNameException;
 import com.robo.RideWithUs.Exceptions.LocationNotFoundForCityNameException;
-=======
-import com.robo.RideWithUs.Exceptions.IncorrectLocationException;
->>>>>>> main
 
 @Service
 public class GetLocation {
@@ -24,14 +22,15 @@ public class GetLocation {
 	public String getLocation(double latitude, double longitude) {
 
 		String url = UriComponentsBuilder.fromUriString("https://us1.locationiq.com/v1/reverse")
-				.queryParam("key", apikey).queryParam("lat", latitude).queryParam("lon", longitude)
-				.queryParam("format", "json").build().toUriString();
-
-		System.err.println(url);
+				.queryParam("key", apikey)
+				.queryParam("lat", latitude)
+				.queryParam("lon", longitude)
+				.queryParam("format", "json")
+				.build()
+				.toUriString();
 
 		try {
 			Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-			System.err.println(response);
 
 			if (response == null || response.get("address") == null) {
 				throw new APIwillNotGivingTheLocationException();
@@ -39,7 +38,6 @@ public class GetLocation {
 
 			Map<String, Object> address = (Map<String, Object>) response.get("address");
 
-			// Full fallback order
 			String[] keys = { "city", "town", "village", "municipality", "county", "state_district", "suburb" };
 
 			for (String key : keys) {
@@ -60,18 +58,14 @@ public class GetLocation {
 
 	public DestinationLocationResponse getCoordinates1(String cityName) {
 
-		RestTemplate restTemplate = new RestTemplate();
-
-		String url = BASE_URL1 + "?key=" + API_KEY1 + "&q=" + cityName + "&format=json" + "&limit=1";
+		String url = BASE_URL1 + "?key=" + API_KEY1 + "&q=" + cityName + "&format=json&limit=1";
 
 		try {
-			// Debug raw response
 			ResponseEntity<String> rawResponse = restTemplate.getForEntity(url, String.class);
 			System.err.println("RAW LOCATIONIQ RESPONSE = " + rawResponse.getBody());
 
-			// Convert JSON → Java object
-			DestinationLocationResponse[] response = restTemplate.getForObject(url,
-					DestinationLocationResponse[].class);
+			DestinationLocationResponse[] response =
+					restTemplate.getForObject(url, DestinationLocationResponse[].class);
 
 			if (response != null && response.length > 0) {
 				return response[0];
@@ -89,18 +83,14 @@ public class GetLocation {
 
 	public DestinationLocationResponse getCoordinates2(String cityName) {
 
-		RestTemplate restTemplate = new RestTemplate();
-
-		String url = BASE_URL2 + "?key=" + API_KEY2 + "&q=" + cityName + "&format=json" + "&limit=1";
+		String url = BASE_URL2 + "?key=" + API_KEY2 + "&q=" + cityName + "&format=json&limit=1";
 
 		try {
-			// Debug raw response
 			ResponseEntity<String> rawResponse = restTemplate.getForEntity(url, String.class);
 			System.err.println("RAW LOCATIONIQ RESPONSE = " + rawResponse.getBody());
 
-			// Convert JSON → Java object
-			DestinationLocationResponse[] response = restTemplate.getForObject(url,
-					DestinationLocationResponse[].class);
+			DestinationLocationResponse[] response =
+					restTemplate.getForObject(url, DestinationLocationResponse[].class);
 
 			if (response != null && response.length > 0) {
 				return response[0];
@@ -112,5 +102,4 @@ public class GetLocation {
 			throw new LocationIQErrorForCityNameException();
 		}
 	}
-
 }
