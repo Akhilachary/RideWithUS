@@ -23,6 +23,7 @@ import com.robo.RideWithUs.Entity.Bookings;
 import com.robo.RideWithUs.Entity.Customer;
 import com.robo.RideWithUs.Entity.Driver;
 import com.robo.RideWithUs.Entity.Payment;
+import com.robo.RideWithUs.Entity.User;
 import com.robo.RideWithUs.Entity.Vehicle;
 import com.robo.RideWithUs.Exceptions.BookingNotFoundException;
 import com.robo.RideWithUs.Exceptions.DriverAlreadyExistException;
@@ -99,8 +100,15 @@ public class DriverService {
 		String city = getLocation.getLocation(driverVehicleDTO.getLatitude(), driverVehicleDTO.getLongitude());
 		vehicle.setCity(city);
 		
+		User user = new User();
+		user.setMobileNumber(driverVehicleDTO.getDriverMobileNumber());
+		user.setPassword(driverVehicleDTO.getPassword());
+		user.setRole("DRIVER");
+		
+		driver.setUser(user);
 		vehicle.setDriver(driver);  
 		driver.setVehicle(vehicle);
+		
 		
 		Driver saveddriver = driverRepository.save(driver);
 		

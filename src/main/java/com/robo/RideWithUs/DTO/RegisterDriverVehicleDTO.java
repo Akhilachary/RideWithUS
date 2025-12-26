@@ -9,6 +9,7 @@ public class RegisterDriverVehicleDTO {
 	private long driverMobileNumber;
 	private String gender;
 	private String mailID;
+	private String password;
 	private String vehicleName;
 	private String vehicleNumber;
 	private String vehicleModel;
@@ -18,8 +19,17 @@ public class RegisterDriverVehicleDTO {
 	private double latitude;
 	private long priceperKilometer;
 	private int averageSpeed;
+
 	
 	
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
 	public int getAverageSpeed() {
 		return averageSpeed;
 	}
@@ -147,13 +157,12 @@ public class RegisterDriverVehicleDTO {
 	public void setPriceperKilometer(long priceperKilometer) {
 		this.priceperKilometer = priceperKilometer;
 	}
-
 	
 
 	public RegisterDriverVehicleDTO(String licenseNumber, String upiID, String driverName, int driverAge,
-			long driverMobileNumber, String gender, String mailID, String vehicleName, String vehicleNumber,
-			String vehicleModel, String vehicletype, int capacity, double longitude, double latitude,
-			long priceperKilometer, int averageSpeed) {
+			long driverMobileNumber, String gender, String mailID, String password, String vehicleName,
+			String vehicleNumber, String vehicleModel, String vehicletype, int capacity, double longitude,
+			double latitude, long priceperKilometer, int averageSpeed) {
 		super();
 		this.licenseNumber = licenseNumber;
 		this.upiID = upiID;
@@ -162,6 +171,7 @@ public class RegisterDriverVehicleDTO {
 		this.driverMobileNumber = driverMobileNumber;
 		this.gender = gender;
 		this.mailID = mailID;
+		this.password = password;
 		this.vehicleName = vehicleName;
 		this.vehicleNumber = vehicleNumber;
 		this.vehicleModel = vehicleModel;

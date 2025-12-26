@@ -7,18 +7,15 @@ public class CustomerRegisterDTO {
     private String gender;
     private long mobileNo;
     private String email;
+    private String password;
     private double latitude;
     private double longitude;
-	public CustomerRegisterDTO(String name, int age, String gender, long mobileNo, String email, double latitude,
-			double longitude) {
-		super();
-		this.name = name;
-		this.age = age;
-		this.gender = gender;
-		this.mobileNo = mobileNo;
-		this.email = email;
-		this.latitude = latitude;
-		this.longitude = longitude;
+    
+	public String getPassword() {
+		return password;
+	}
+	public void setPassword(String password) {
+		this.password = password;
 	}
 	public String getName() {
 		return name;
@@ -64,6 +61,18 @@ public class CustomerRegisterDTO {
 	}
 	public CustomerRegisterDTO() {
 		super();
+	}
+	public CustomerRegisterDTO(String name, int age, String gender, long mobileNo, String email, String password,
+			double latitude, double longitude) {
+		super();
+		this.name = name;
+		this.age = age;
+		this.gender = gender;
+		this.mobileNo = mobileNo;
+		this.email = email;
+		this.password = password;
+		this.latitude = latitude;
+		this.longitude = longitude;
 	}
     
     

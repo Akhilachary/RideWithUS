@@ -35,8 +35,17 @@ public class Driver {
 	 
 	 @OneToMany
 	 private List<Bookings> bookings;
+	 
+	 @OneToOne(cascade = CascadeType.ALL)
+	 private User user;
 	
 	
+	public User getUser() {
+		return user;
+	}
+	 public void setUser(User user) {
+		 this.user = user;
+	 }
 	public List<Bookings> getBookings() {
 		return bookings;
 	}
@@ -111,7 +120,8 @@ public class Driver {
 	}
 	
 	public Driver(int id, String licenseNumber, String upiID, String driverName, String status, int age,
-			long mobileNumber, String gender, String mailID, String role, Vehicle vehicle, List<Bookings> bookings) {
+			long mobileNumber, String gender, String mailID, String role, Vehicle vehicle, List<Bookings> bookings,
+			User user) {
 		super();
 		this.id = id;
 		this.licenseNumber = licenseNumber;
@@ -125,12 +135,11 @@ public class Driver {
 		this.role = role;
 		this.vehicle = vehicle;
 		this.bookings = bookings;
+		this.user = user;
 	}
 	public Driver() {
 		super();
 	}
-	
-	
 	
 	
 }

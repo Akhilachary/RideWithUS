@@ -20,7 +20,7 @@ import com.robo.RideWithUs.DTO.RideDetailDTO;
 import com.robo.RideWithUs.DTO.VehicleDetail;
 import com.robo.RideWithUs.Entity.Bookings;
 import com.robo.RideWithUs.Entity.Customer;
-
+import com.robo.RideWithUs.Entity.User;
 import com.robo.RideWithUs.Entity.Vehicle;
 import com.robo.RideWithUs.Exceptions.BookingNotFoundException;
 import com.robo.RideWithUs.Exceptions.CustomerExistAlreadyException;
@@ -65,7 +65,13 @@ public class CustomerService {
 		customer.setCutomerEmailID(customerRegisterDTO.getEmail());
 		customer.setCustomerCurrentLocation(
 				getLocation.getLocation(customerRegisterDTO.getLatitude(), customerRegisterDTO.getLongitude()));
-
+		
+		User user = new User();
+		user.setMobileNumber(customerRegisterDTO.getMobileNo());
+		user.setPassword(customerRegisterDTO.getPassword());
+		user.setRole("CUSTOMER");
+		
+		customer.setUser(user);
 		Customer savedcustomer = customerrepository.save(customer);
 
 		// Response

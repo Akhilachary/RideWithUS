@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 
 
 @Entity
@@ -28,8 +29,20 @@ public class Customer {
 	
 	@OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
 	private List<Bookings> bookingslist;
-
 	
+	@OneToOne(cascade = CascadeType.ALL)
+	private User user;
+	
+	
+	public User getUser() {
+		return user;
+	}
+	public void setUser(User user) {
+		this.user = user;
+	}
+	public void setId(Integer id) {
+		this.id = id;
+	}
 	public double getPenalty() {
 		return penalty;
 	}
@@ -98,9 +111,10 @@ public class Customer {
 	public void setRole(String role) {
 		this.role = role;
 	}
+	
 	public Customer(Integer id, String customerName, int cutomerAge, String customerGender, long mobileNumber,
-			String cutomerEmailID, String customerCurrentLocation, boolean activeBookingFlag, String role, double penalty,
-			List<Bookings> bookingslist) {
+			String cutomerEmailID, String customerCurrentLocation, boolean activeBookingFlag, String role,
+			double penalty, List<Bookings> bookingslist, User user) {
 		super();
 		this.id = id;
 		this.customerName = customerName;
@@ -113,6 +127,7 @@ public class Customer {
 		this.role = role;
 		this.penalty = penalty;
 		this.bookingslist = bookingslist;
+		this.user = user;
 	}
 	public Customer() {
 		super();

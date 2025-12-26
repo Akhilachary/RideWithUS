@@ -72,7 +72,7 @@ public class BookingService {
 		bookings.setEstimatedTimeRequired(bookVehicledto.getEstiamtedTime());
 		bookings.setBookingDate(LocalDateTime.now());
 		bookings.setBookingStatus("PENDING");
-		bookings.setOTP(generateOtp());	//how to generate random otp here
+		bookings.setOTP(generateOtp());	
 		bookings.setPaymentStatus("NOT PAID");
 		customer.getBookingslist().add(bookings);
 		customer.setActiveBookingFlag(true);
@@ -127,7 +127,8 @@ public class BookingService {
 
         } catch (Exception e) {
             
-            System.out.println("Mail sending failed: " + e.getMessage());
+            System.out.println("Mail sending failed: " + e.getMessage(
+            		));
         }
 		
 		return new ResponseEntity<ResponseStructure<Bookings>>(responseStructure,HttpStatus.ACCEPTED);
