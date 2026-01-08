@@ -242,6 +242,16 @@ public class GlobalExceptions {
 
 		    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
 	 }
+	    @ExceptionHandler(RuntimeException.class)
+	    public ResponseEntity<ResponseStructure<String>> handleRuntimeException(RuntimeException ex) {
+
+	        ResponseStructure<String> response = new ResponseStructure<>();
+	        response.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	        response.setMessage(ex.getMessage());
+	        response.setData(null);
+
+	        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+	    }
 }
 
 

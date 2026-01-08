@@ -2,6 +2,8 @@ package com.robo.RideWithUs.Entity;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -28,9 +30,11 @@ public class Customer {
 	private double penalty;
 	
 	@OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
+	@JsonIgnore
 	private List<Bookings> bookingslist;
 	
 	@OneToOne(cascade = CascadeType.ALL)
+	@JsonIgnore
 	private User user;
 	
 	

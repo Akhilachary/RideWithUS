@@ -13,6 +13,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Integer>{
 
 	 Optional<Customer> findByMobileNumber(long mobileNumber);
 	 
+	 boolean existsByMobileNumber(long mobileNumber);
 
 	 
 }

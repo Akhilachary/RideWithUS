@@ -2,6 +2,7 @@ package com.robo.RideWithUs.Entity;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
@@ -34,9 +35,11 @@ public class Driver {
 	private Vehicle vehicle;
 	 
 	 @OneToMany
+	 @JsonIgnore
 	 private List<Bookings> bookings;
 	 
 	 @OneToOne(cascade = CascadeType.ALL)
+	 @JsonIgnore
 	 private User user;
 	
 	

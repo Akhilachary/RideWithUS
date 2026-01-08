@@ -1,11 +1,13 @@
 package com.robo.RideWithUs.DTO;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BookingHistoryDTO {
 
-	private List<RideDetailDTO> rideDetailDTOs;
-	private double totalAmount;
+	// Initialize it here to prevent NullPointerException
+    private List<RideDetailDTO> rideDetailDTOs = new ArrayList<>();
+    private double totalAmount;
 	
 	public List<RideDetailDTO> getRideDetailDTOs() {
 		return rideDetailDTOs;

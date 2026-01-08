@@ -57,7 +57,11 @@ public class BookingService {
 			throw new DriverNotAvailableException();
 		}
 		
-		if (vehicle.getAvailabilityStatus().equals("BOOKED")) {
+		if (!vehicle.getAvailabilityStatus().equals("AVAILABLE")) {
+	        throw new VehicleNotAvailableException();
+	    }
+		
+		if (vehicle.getAvailabilityStatus().equals("ONGOING")) {
 	        throw new VehicleNotAvailableException();
 	    }
 		
@@ -71,7 +75,7 @@ public class BookingService {
 		bookings.setDistanceTravelled(bookVehicledto.getDistanceTravelled());
 		bookings.setEstimatedTimeRequired(bookVehicledto.getEstiamtedTime());
 		bookings.setBookingDate(LocalDateTime.now());
-		bookings.setBookingStatus("PENDING");
+		bookings.setBookingStatus("BOOKED");
 		bookings.setOTP(generateOtp());	
 		bookings.setPaymentStatus("NOT PAID");
 		customer.getBookingslist().add(bookings);

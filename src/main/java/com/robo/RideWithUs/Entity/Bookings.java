@@ -27,6 +27,7 @@ public class Bookings {
 
 	@ManyToOne
 	@JoinColumn(name = "vehicle_id")
+	@JsonIgnore
 	private Vehicle vehicle;
 	
 	private int OTP;

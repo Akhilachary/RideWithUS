@@ -2,7 +2,7 @@ package com.robo.RideWithUs.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,22 +17,21 @@ import com.robo.RideWithUs.Service.MailService;
 @RequestMapping("/booking")
 @RestController
 public class BookingController {
-	
-	@Autowired
-	BookingService bookingService;
-	
-	@Autowired
-	MailService mailService;
 
-	@PostMapping("/bookVehicle/{mobileNo}")
-	public ResponseEntity<ResponseStructure<Bookings>> BookVehicle(@PathVariable long mobileNo, @RequestBody BookVehicelDTO bookVehicledto) {
-		
-		return bookingService.bookVehicle(mobileNo,bookVehicledto);
-	}
-	
-	@PostMapping("/sendMail")
-	public void sendMail() {
-		mailService.sendMail("maheshwaramakhila03@gmail.com","BOOKING CONFIRMED","Here are the Booking Details"); 
-	}
+    @Autowired
+    BookingService bookingService;
+
+    @Autowired
+    MailService mailService;
+
+    @PostMapping("/bookVehicle")
+    public ResponseEntity<ResponseStructure<Bookings>> bookVehicle(@RequestBody BookVehicelDTO bookVehicledto) {
+        // Get mobile number from JWT token
+        String mobileNoString = (String) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
+        long mobileNo = Long.parseLong(mobileNoString);
+
+        return bookingService.bookVehicle(mobileNo, bookVehicledto);
+    }
 }
-

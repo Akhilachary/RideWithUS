@@ -1,5 +1,7 @@
 package com.robo.RideWithUs.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -17,12 +19,15 @@ public class Payment {
 	private double amount;
 	
 	@OneToOne(cascade = CascadeType.ALL)
+	@JsonIgnore
 	private Vehicle vehicle;
 	
 	@OneToOne(cascade = CascadeType.ALL)
+	@JsonIgnore
 	private Customer customer;
 	
 	@OneToOne(cascade = CascadeType.ALL)
+	@JsonIgnore
 	private Bookings bookings;
 
 	

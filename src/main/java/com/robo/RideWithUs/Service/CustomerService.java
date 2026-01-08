@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.robo.RideWithUs.DAO.GetLocation;
@@ -47,6 +48,9 @@ public class CustomerService {
 	BookingRepository bookingRepository;
 	
 	@Autowired
+	PasswordEncoder encoder;
+	
+	@Autowired
 	Distance_Duration_Service distance_Duration_Service;
 
 	public ResponseEntity<ResponseStructure<Customer>> registerCustomer(CustomerRegisterDTO customerRegisterDTO) {
@@ -68,13 +72,12 @@ public class CustomerService {
 		
 		User user = new User();
 		user.setMobileNumber(customerRegisterDTO.getMobileNo());
-		user.setPassword(customerRegisterDTO.getPassword());
+		user.setPassword(encoder.encode(customerRegisterDTO.getPassword()));
 		user.setRole("CUSTOMER");
 		
 		customer.setUser(user);
 		Customer savedcustomer = customerrepository.save(customer);
 
-		// Response
 		ResponseStructure<Customer> response = new ResponseStructure<>();
 		response.setStatusCode(HttpStatus.CREATED.value());
 		response.setMessage("Customer registered successfully");
@@ -90,12 +93,16 @@ public class CustomerService {
 	    Customer customer = customerrepository.findByMobileNumber(mobileNumber)
 	            .orElseThrow(CustomerNotFoundWithThisMobileNumberException::new);
 	    
-	    if (customer.isActiveBookingFlag()) {
-	        throw new IllegalStateException(
-	            "You already have an active booking. Please complete or cancel it first."
-	        );
-	    }
+	    boolean hasActiveBooking = bookingRepository.existsByCustomerMobileNumberAndBookingStatusIn(
+	    	    mobileNumber, List.of("BOOKED", "ONGOING"));
 
+	    	if (hasActiveBooking) {
+	    	    customer.setActiveBookingFlag(true);
+	    	    customerrepository.save(customer);
+	    	    throw new IllegalStateException(
+	    	        "You already have an active booking. Please complete or cancel it first."
+	    	    );
+	    	} 
 
 	    String customerLocation = customer.getCustomerCurrentLocation();
 
@@ -125,10 +132,11 @@ public class CustomerService {
 	    dto.setDestinationLocation(city);
 	    dto.setDistance(distanceKm);
 
-	    // ✅ Fetch vehicles near CUSTOMER current location
+	    //  Fetch vehicles near CUSTOMER current location
 	    List<Vehicle> vehicles =
 	            vehicleRepository.findByCityAndAvailabilityStatus(
 	                    customerLocation, "AVAILABLE");
+	    double penalty = customer.getPenalty();
 
 	    for (Vehicle v : vehicles) {
 
@@ -140,11 +148,11 @@ public class CustomerService {
 
 	        VehicleDetail detail = new VehicleDetail();
 
-	        // 💰 Fare calculation
+	        //  Fare calculation
 	        double fare = v.getPricePerKM() * distanceKm;
-	        detail.setFare((int) Math.round(fare));
+	        detail.setFare((int) Math.round(fare)+(int)penalty);
 
-	        // ⏱ Estimated time
+	        //  Estimated time
 	        if (v.getAverageSpeed() <= 0) {
 	            detail.setEstimatedTime(-1);
 	            detail.setEstimatedTimeString("N/A");
@@ -207,7 +215,7 @@ public class CustomerService {
 
 	public ResponseEntity<ResponseStructure<BookingHistoryDTO>> seeCustomerBookingHistory(long mobileNo) {
 
-		Customer customer = customerrepository.findByMobileNumber(mobileNo).orElseThrow(()-> new CustomerNotFoundWithThisMobileNumberException());
+		customerrepository.findByMobileNumber(mobileNo).orElseThrow(()-> new CustomerNotFoundWithThisMobileNumberException());
 		
 		List<Bookings> bookings = bookingRepository.findByCustomerMobileNumberAndBookingStatus(mobileNo,"COMPLETED");
 		
@@ -240,75 +248,89 @@ public class CustomerService {
 
 	
 	public ResponseEntity<ResponseStructure<ActiveBookingDTO>> seeActiveBooking(long mobileNo) {
-		
-		Customer customer = customerrepository.findByMobileNumber(mobileNo).orElseThrow(()-> new CustomerNotFoundWithThisMobileNumberException());
-		
-		if(customer.isActiveBookingFlag()) {
-		
-		ActiveBookingDTO activeBookingDTO = new ActiveBookingDTO();
-		activeBookingDTO.setCustomerName(customer.getCustomerName());
-		activeBookingDTO.setCustomerMobileNo(mobileNo);
-		activeBookingDTO.setCurrentLocation(customer.getCustomerCurrentLocation());
-		Bookings bookings = bookingRepository.findFirstByCustomerMobileNumberAndBookingStatus(mobileNo,"ONGOING");
-		if(bookings == null) {
-			throw new NoActiveBookingFoundException();
-		}
-		activeBookingDTO.setBookings(bookings);
-		
-		ResponseStructure<ActiveBookingDTO> responseStructure = new ResponseStructure<ActiveBookingDTO>();
-		responseStructure.setStatusCode(HttpStatus.FOUND.value());
-		responseStructure.setMessage("Active Booking Status");
-		responseStructure.setData(activeBookingDTO);
-		
-		return new ResponseEntity<ResponseStructure<ActiveBookingDTO>>(responseStructure,HttpStatus.NOT_FOUND);
-		
-	}
-		ResponseStructure<ActiveBookingDTO> responseStructure = new ResponseStructure<ActiveBookingDTO>();
-		responseStructure.setStatusCode(HttpStatus.FOUND.value());
-		responseStructure.setMessage("Active Booking Status");
-		responseStructure.setData(null);
-		
-		return new ResponseEntity<ResponseStructure<ActiveBookingDTO>>(responseStructure,HttpStatus.NOT_FOUND);
-		
+
+	    Customer customer = customerrepository
+	        .findByMobileNumber(mobileNo)
+	        .orElseThrow(CustomerNotFoundWithThisMobileNumberException::new);
+
+	 // If the flag is false, don't even look for a booking
+	    if (!customer.isActiveBookingFlag()) {
+	        throw new NoActiveBookingFoundException();
+	    }
+
+	    Bookings booking = bookingRepository.findTopByCustomerMobileNumberAndBookingStatusInOrderByIdDesc(
+	    	    mobileNo, List.of("BOOKED", "ONGOING"));
+
+	    if (booking == null) {
+	        // Cleanup: If flag was true but no ongoing booking found, sync the flag
+	        customer.setActiveBookingFlag(false);
+	        customerrepository.save(customer);
+	        throw new NoActiveBookingFoundException();
+	    }
+
+	    ActiveBookingDTO dto = new ActiveBookingDTO();
+	    dto.setCustomerName(customer.getCustomerName());
+	    dto.setCustomerMobileNo(mobileNo);
+	    dto.setCurrentLocation(customer.getCustomerCurrentLocation());
+	    dto.setBookings(booking);
+
+	    ResponseStructure<ActiveBookingDTO> response = new ResponseStructure<>();
+	    response.setStatusCode(HttpStatus.OK.value());
+	    response.setMessage("Active Booking Found");
+	    response.setData(dto);
+
+	    return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	public ResponseEntity<ResponseStructure<Bookings>> cancelBookingByCustomer(int customerID, int bookingID) {
-		// TODO Auto-generated method stub
-		Customer customer = customerrepository.findById(customerID).orElseThrow(()-> new CustomerNotFoundException());
-		Bookings bookings = bookingRepository.findById(bookingID).orElseThrow(()-> new BookingNotFoundException());
-		
-		// Prevent double cancellation
+
+	public ResponseEntity<ResponseStructure<Bookings>> cancelBookingByCustomer(
+	        long mobileNo, int bookingID) {
+
+	    //  Customer fetched ONLY via JWT mobile number
+	    Customer customer = customerrepository
+	            .findByMobileNumber(mobileNo)
+	            .orElseThrow(() -> new CustomerNotFoundException());
+
+	    Bookings bookings = bookingRepository
+	            .findById(bookingID)
+	            .orElseThrow(() -> new BookingNotFoundException());
+
+	    //  Ownership check (VERY IMPORTANT)
+	    if (!bookings.getCustomer().getId().equals(customer.getId())) {
+	        throw new RuntimeException("You are not allowed to cancel this booking");
+	    }
+
+	    // Prevent double cancellation
 	    if (bookings.getBookingStatus().startsWith("CANCELLED")) {
 	        throw new RuntimeException("Booking already cancelled");
 	    }
 
-	    // Apply penalty ONLY if driver is assigned
-	    if (bookings.getVehicle().getDriver() != null) {
+	    // Apply penalty ONLY if driver assigned
+	    if (bookings.getVehicle() != null &&
+	        bookings.getVehicle().getDriver() != null) {
+
 	        double penalty = bookings.getFare() * 0.10;
 	        customer.setPenalty(customer.getPenalty() + penalty);
 	    }
-		
-		bookings.setBookingStatus("CANCELLED BY CUSTOMER");
-		
-		Vehicle vehicle = bookings.getVehicle();
-		vehicle.setAvailabilityStatus("AVAILABLE");
-		
-		bookingRepository.save(bookings);
-		customerrepository.save(customer);
-		vehicleRepository.save(vehicle);
-		
-		
-		ResponseStructure<Bookings> responseStructure = new ResponseStructure<Bookings>();
-		responseStructure.setStatusCode(HttpStatus.ACCEPTED.value());
-		responseStructure.setMessage("SUCCESSFULLY CANCELLED BY CUSTOMER");
-		responseStructure.setData(bookings);
-		
-		return new ResponseEntity<ResponseStructure<Bookings>>(responseStructure,HttpStatus.ACCEPTED);
-		
-		
-	}
-	
-	
-	
 
+	    bookings.setBookingStatus("CANCELLED_BY_CUSTOMER");
+
+	    Vehicle vehicle = bookings.getVehicle();
+	    vehicle.setAvailabilityStatus("AVAILABLE");
+
+	    customer.setActiveBookingFlag(false);
+
+	    bookingRepository.save(bookings);
+	    vehicleRepository.save(vehicle);
+	    customerrepository.save(customer);
+
+	    ResponseStructure<Bookings> responseStructure = new ResponseStructure<>();
+	    responseStructure.setStatusCode(HttpStatus.ACCEPTED.value());
+	    responseStructure.setMessage("SUCCESSFULLY CANCELLED BY CUSTOMER");
+	    responseStructure.setData(bookings);
+
+	    return new ResponseEntity<>(responseStructure, HttpStatus.ACCEPTED);
+	}
+
+	
 }

@@ -43,8 +43,23 @@ public interface BookingRepository extends JpaRepository<Bookings, Integer>{
             LocalDateTime start,
             LocalDateTime end
     );
+    
+ // This method will find the most recent booking that is either BOOKED or ONGOING
+    Bookings findTopByCustomerMobileNumberAndBookingStatusInOrderByIdDesc(long mobileNo, List<String> statuses);
+    
+    // Also helpful for your check in seeAllAvailableVehicles
+    boolean existsByCustomerMobileNumberAndBookingStatusIn(long mobileNo, List<String> statuses);
+    
+ // Spring translates this to: 
+    // SELECT count(*) FROM Bookings b 
+    // JOIN Vehicle v ON b.vehicle_id = v.id 
+    // JOIN Driver d ON v.driver_id = d.id 
+    // WHERE d.id = ? AND b.booking_status = ?
+    boolean existsByVehicle_Driver_IdAndBookingStatus(int driverId, String status);
+
+}
 
     
-}
+
 
 

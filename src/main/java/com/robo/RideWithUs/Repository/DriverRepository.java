@@ -11,7 +11,7 @@ import com.robo.RideWithUs.Entity.Driver;
 @Repository
 public interface DriverRepository extends JpaRepository<Driver, Integer> {
 	
-
-
 	 Optional<Driver> findByMobileNumber(long mobileNumber);
+
+	 boolean existsByMobileNumber(long mobileNumber);
 }

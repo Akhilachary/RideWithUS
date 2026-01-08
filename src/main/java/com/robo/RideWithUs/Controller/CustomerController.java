@@ -2,21 +2,10 @@ package com.robo.RideWithUs.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
-import com.robo.RideWithUs.DTO.ActiveBookingDTO;
-import com.robo.RideWithUs.DTO.AvailableVehicleDTO;
-import com.robo.RideWithUs.DTO.BookingHistoryDTO;
-import com.robo.RideWithUs.DTO.CustomerRegisterDTO;
-import com.robo.RideWithUs.DTO.ResponseStructure;
+import com.robo.RideWithUs.DTO.*;
 import com.robo.RideWithUs.Entity.Bookings;
 import com.robo.RideWithUs.Entity.Customer;
 import com.robo.RideWithUs.Service.CustomerService;
@@ -25,50 +14,61 @@ import com.robo.RideWithUs.Service.CustomerService;
 @RequestMapping("/customer")
 public class CustomerController {
 
-	@Autowired
-	CustomerService customerservice;
-	
-	@PostMapping("/registerCustomer")
-	public ResponseEntity<ResponseStructure<Customer>> registerCustomer(@RequestBody CustomerRegisterDTO customerRegisterDTO) {
-		
-		return customerservice.registerCustomer(customerRegisterDTO);
-	}
-	
-	@GetMapping("/findCustomer/{mobileNumber}")
-	public ResponseEntity<ResponseStructure<Customer>> findCustomerByMobileNumber(@PathVariable long mobileNumber) {
-		
-		return customerservice.findCustomerByMobileNumber(mobileNumber);
-		
-	}
-	
-	@GetMapping("/seeallAvailablevehicle/{mobileNumber}/{city}")
-	public ResponseEntity<ResponseStructure<AvailableVehicleDTO>> sellAllAvailableVehicles(@PathVariable long mobileNumber, @PathVariable String city) {
-		
-		return customerservice.seeAllAvailableVehicles(mobileNumber, city);
-	}
-	
-	@DeleteMapping("deleteCustomer/{mobileNumber}")
-	public ResponseEntity<ResponseStructure<Customer>> deleteCustomerByMobileNumber(@PathVariable long mobileNumber) {
-		
-		return customerservice.deleteCustomerByMobileNumber(mobileNumber);
-	}
-	
-	
-	@GetMapping("/seeCustomerBookingHistory")
-	public ResponseEntity<ResponseStructure<BookingHistoryDTO>> seeCustomerBookingHistory(@RequestHeader long mobileNo) {
-		
-		 return customerservice.seeCustomerBookingHistory(mobileNo);
-	}
-	
-	@GetMapping("/findCustomerHaveActiveBookings/{mobileNo}")
-	public ResponseEntity<ResponseStructure<ActiveBookingDTO>> findCustomerHaveActiveBookings(@PathVariable long mobileNo) {
-		
-		return customerservice.seeActiveBooking(mobileNo);
-	}
-	
-	@PutMapping("/cancelBookingByCustomer")
-	public ResponseEntity<ResponseStructure<Bookings>> cancelBookingByCustomer(@RequestHeader int customerID,@RequestHeader int bookingID) {
-		return customerservice.cancelBookingByCustomer(customerID,bookingID);
-	}
-	
+    @Autowired
+    private CustomerService customerService;
+
+    //  Helper method to extract mobile from JWT
+    private long getLoggedInCustomerMobile() {
+        String mobile = (String) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+        return Long.parseLong(mobile);
+    }
+
+    //  Get logged-in customer profile
+    @GetMapping("/profile")
+    public ResponseEntity<ResponseStructure<Customer>> getCustomerProfile() {
+        long mobile = getLoggedInCustomerMobile();
+        return customerService.findCustomerByMobileNumber(mobile);
+    }
+
+    // See all available vehicles in a city
+    @GetMapping("/available-vehicles/{city}")
+    public ResponseEntity<ResponseStructure<AvailableVehicleDTO>> seeAllAvailableVehicles(
+            @PathVariable String city) {
+
+        long mobile = getLoggedInCustomerMobile();
+        return customerService.seeAllAvailableVehicles(mobile, city);
+    }
+
+    //  Delete logged-in customer account
+    @DeleteMapping("/delete")
+    public ResponseEntity<ResponseStructure<Customer>> deleteCustomer() {
+        long mobile = getLoggedInCustomerMobile();
+        return customerService.deleteCustomerByMobileNumber(mobile);
+    }
+
+    //  See booking history
+    @GetMapping("/booking-history")
+    public ResponseEntity<ResponseStructure<BookingHistoryDTO>> seeCustomerBookingHistory() {
+        long mobile = getLoggedInCustomerMobile();
+        return customerService.seeCustomerBookingHistory(mobile);
+    }
+
+    //  See active booking
+    @GetMapping("/active-booking")
+    public ResponseEntity<ResponseStructure<ActiveBookingDTO>> seeActiveBooking() {
+        long mobile = getLoggedInCustomerMobile();
+        return customerService.seeActiveBooking(mobile);
+    }
+
+    //  Cancel booking
+    @PutMapping("/cancel-booking/{bookingId}")
+    public ResponseEntity<ResponseStructure<Bookings>> cancelBooking(
+            @PathVariable int bookingId) {
+
+        long mobile = getLoggedInCustomerMobile();
+        return customerService.cancelBookingByCustomer(mobile, bookingId);
+    }
 }
